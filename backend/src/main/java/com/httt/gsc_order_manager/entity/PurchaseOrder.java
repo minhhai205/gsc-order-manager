@@ -36,10 +36,6 @@ public class PurchaseOrder extends BaseEntity {
     @JoinColumn(name = "contract_id", nullable = false)
     private StandingContract contract;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "agency_id", nullable = false)
-    private FederalAgency agency;
-
     @Column(nullable = false)
     private LocalDate issueDate;
 

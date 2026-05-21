@@ -1,6 +1,7 @@
 package com.httt.gsc_order_manager.service;
 
 import com.httt.gsc_order_manager.entity.AuditLog;
+import com.httt.gsc_order_manager.entity.UserAccount;
 import com.httt.gsc_order_manager.entity.enums.AuditAction;
 import com.httt.gsc_order_manager.repository.AuditLogRepository;
 import com.httt.gsc_order_manager.security.AuthenticatedUser;
@@ -23,21 +24,21 @@ public class AuditLogService {
         auditLog.setAction(action);
         auditLog.setEntityName(entityName);
         auditLog.setEntityId(entityId == null ? null : entityId.toString());
-        auditLog.setActor(resolveActor());
+        setActor(auditLog);
         auditLog.setOccurredAt(Instant.now());
         auditLog.setDetail(detail);
         auditLogRepository.save(auditLog);
     }
 
-    private String resolveActor() {
+    private void setActor(AuditLog auditLog) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null) {
-            return "system";
+            return;
         }
         Object principal = authentication.getPrincipal();
         if (principal instanceof AuthenticatedUser authenticatedUser) {
-            return authenticatedUser.getUsername();
+            UserAccount userAccount = authenticatedUser.getUserAccount();
+            auditLog.setActor(userAccount);
         }
-        return authentication.getName();
     }
 }

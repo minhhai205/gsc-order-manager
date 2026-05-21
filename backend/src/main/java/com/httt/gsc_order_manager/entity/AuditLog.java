@@ -8,6 +8,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
@@ -31,8 +34,9 @@ public class AuditLog extends BaseEntity {
     @Column(length = 80)
     private String entityId;
 
-    @Column(length = 150)
-    private String actor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "actor_id")
+    private UserAccount actor;
 
     @Column(nullable = false)
     private Instant occurredAt;
