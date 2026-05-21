@@ -46,6 +46,8 @@ Backend rules:
 - Prefer constructor injection.
 - Use enums for fixed statuses and roles.
 - Avoid putting business logic in entities unless it is small and domain-specific.
+- When adding or changing backend APIs, add or update unit tests for the controller/service behavior in the same change.
+- API tests should cover the successful path and important validation, authorization, or business-rule failures introduced by the change.
 
 Suggested backend module flow:
 
@@ -130,6 +132,7 @@ npm run build
 Before finishing backend changes:
 
 - Run Maven tests when feasible.
+- For API work, ensure the new or changed API behavior is covered by unit tests before finishing.
 - Confirm the Spring context starts for dependency, entity, and security changes.
 
 Before finishing frontend changes:
@@ -138,4 +141,3 @@ Before finishing frontend changes:
 - For UI work, start the dev server and verify the page in the browser when practical.
 
 If a command cannot be run, state the reason clearly in the final response.
-
