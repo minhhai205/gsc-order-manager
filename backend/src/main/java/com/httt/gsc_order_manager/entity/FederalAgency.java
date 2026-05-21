@@ -7,6 +7,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 
+/**
+ * Đại diện cho cơ quan liên bang là khách hàng của GSC.
+ * Entity này lưu mã cơ quan, tên, địa chỉ và thông tin người đại diện liên hệ.
+ */
 @Getter
 @Setter
 @Entity

@@ -11,6 +11,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * Lưu vết các thao tác nghiệp vụ quan trọng trong hệ thống.
+ * Bảng này cho biết ai đã làm gì, vào thời điểm nào, trên bản ghi nghiệp vụ nào.
+ */
 @Getter
 @Setter
 @Entity

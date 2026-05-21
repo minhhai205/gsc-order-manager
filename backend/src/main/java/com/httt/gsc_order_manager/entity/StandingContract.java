@@ -18,6 +18,10 @@ import java.time.LocalDate;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * Đại diện cho hợp đồng khung giữa GSC và một cơ quan liên bang.
+ * Entity này định nghĩa thời hạn hiệu lực, hạn mức chi phí, trạng thái và whitelist thiết bị được phép đặt.
+ */
 @Getter
 @Setter
 @Entity

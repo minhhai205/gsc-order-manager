@@ -8,6 +8,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
+/**
+ * Đại diện cho một thiết bị máy tính mà GSC cung cấp và quản lý tồn kho.
+ * Entity này lưu thông tin danh mục, đơn giá chuẩn, số lượng khả dụng và mức tồn tối thiểu.
+ */
 @Getter
 @Setter
 @Entity

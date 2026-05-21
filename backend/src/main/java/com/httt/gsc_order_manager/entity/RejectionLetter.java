@@ -14,6 +14,10 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * Đại diện cho thư từ chối được tạo khi đơn đặt hàng không hợp lệ.
+ * Entity này lưu lý do từ chối, nội dung thư, trạng thái phát hành và thông tin người phát hành.
+ */
 @Getter
 @Setter
 @Entity

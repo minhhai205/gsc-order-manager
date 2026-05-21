@@ -9,6 +9,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * Đại diện cho một dòng thiết bị trong hóa đơn vận chuyển.
+ * Entity này lưu số lượng thực tế được xuất/giao cho từng thiết bị.
+ */
 @Getter
 @Setter
 @Entity
