@@ -2,6 +2,7 @@ package com.httt.gsc_order_manager.mapper;
 
 import com.httt.gsc_order_manager.dto.equipment.CreateEquipmentRequest;
 import com.httt.gsc_order_manager.dto.equipment.EquipmentResponse;
+import com.httt.gsc_order_manager.dto.equipment.UpdateEquipmentRequest;
 import com.httt.gsc_order_manager.entity.Equipment;
 
 public final class EquipmentMapper {
@@ -20,6 +21,16 @@ public final class EquipmentMapper {
         equipment.setMinimumStockLevel(request.getMinimumStockLevel());
         equipment.setActive(true);
         return equipment;
+    }
+
+    public static void updateEntity(Equipment equipment, UpdateEquipmentRequest request) {
+        equipment.setSku(request.getSku());
+        equipment.setName(request.getName());
+        equipment.setManufacturer(request.getManufacturer());
+        equipment.setHardwareSpecs(request.getHardwareSpecs());
+        equipment.setUnitPrice(request.getUnitPrice());
+        equipment.setAvailableStock(request.getAvailableStock());
+        equipment.setMinimumStockLevel(request.getMinimumStockLevel());
     }
 
     public static EquipmentResponse toResponse(Equipment equipment) {

@@ -2,6 +2,7 @@ package com.httt.gsc_order_manager.mapper;
 
 import com.httt.gsc_order_manager.dto.agency.AgencyResponse;
 import com.httt.gsc_order_manager.dto.agency.CreateAgencyRequest;
+import com.httt.gsc_order_manager.dto.agency.UpdateAgencyRequest;
 import com.httt.gsc_order_manager.entity.FederalAgency;
 
 public final class AgencyMapper {
@@ -20,6 +21,16 @@ public final class AgencyMapper {
         agency.setContactEmail(request.getContactEmail());
         agency.setActive(true);
         return agency;
+    }
+
+    public static void updateEntity(FederalAgency agency, UpdateAgencyRequest request) {
+        agency.setAgencyCode(request.getAgencyCode());
+        agency.setName(request.getName());
+        agency.setAddress(request.getAddress());
+        agency.setContactName(request.getContactName());
+        agency.setContactPosition(request.getContactPosition());
+        agency.setContactPhone(request.getContactPhone());
+        agency.setContactEmail(request.getContactEmail());
     }
 
     public static AgencyResponse toResponse(FederalAgency agency) {
