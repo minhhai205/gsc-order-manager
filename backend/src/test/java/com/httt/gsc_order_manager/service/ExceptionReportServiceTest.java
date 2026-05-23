@@ -82,27 +82,6 @@ class ExceptionReportServiceTest {
             .hasMessage("Purchase order has no shortage items");
     }
 
-    @Test
-    void confirmMarksExceptionReportConfirmed() {
-        ExceptionReport report = new ExceptionReport();
-        report.setId(60L);
-        report.setReportNumber("ER-PO-001");
-        report.setPurchaseOrder(purchaseOrder(PurchaseOrderStatus.INVENTORY_CHECKED, equipment(20L, "LAP-001", 1), 3));
-        report.setReportedAt(java.time.Instant.now());
-        when(exceptionReportRepository.findById(60L)).thenReturn(Optional.of(report));
-
-        ExceptionReportResponse response = exceptionReportService.confirm(60L);
-
-        assertThat(response.getConfirmedAt()).isNotNull();
-        assertThat(response.getConfirmedBy()).isEqualTo("Order Fulfillment Staff");
-        verify(auditLogService).record(
-            eq(AuditAction.UPDATE),
-            eq(ExceptionReport.class.getSimpleName()),
-            eq(60L),
-            eq("Confirmed exception report ER-PO-001")
-        );
-    }
-
     private PurchaseOrder purchaseOrder(PurchaseOrderStatus status, Equipment equipment, int requestedQuantity) {
         StandingContract contract = contract(equipment);
         PurchaseOrder purchaseOrder = new PurchaseOrder();

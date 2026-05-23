@@ -100,16 +100,6 @@ public class ExceptionReportService {
         return ExceptionReportMapper.toResponse(savedReport);
     }
 
-    @Transactional
-    public ExceptionReportResponse confirm(Long id) {
-        ExceptionReport report = findReport(id);
-        report.setConfirmedAt(Instant.now());
-        report.setConfirmedBy("Order Fulfillment Staff");
-        auditLogService.record(AuditAction.UPDATE, ExceptionReport.class.getSimpleName(),
-            report.getId(), "Confirmed exception report " + report.getReportNumber());
-        return ExceptionReportMapper.toResponse(report);
-    }
-
     @Transactional(readOnly = true)
     public byte[] exportPdf(Long id) {
         ExceptionReport report = findReport(id);

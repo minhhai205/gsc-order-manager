@@ -11,7 +11,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -47,12 +46,6 @@ public class ExceptionReportController {
     public ResponseEntity<ApiResponse<ExceptionReportResponse>> createForPurchaseOrder(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.success("Exception report created successfully",
             exceptionReportService.createForPurchaseOrder(id)));
-    }
-
-    @PatchMapping("/exception-reports/{id}/confirm")
-    public ResponseEntity<ApiResponse<ExceptionReportResponse>> confirm(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Exception report confirmed successfully",
-            exceptionReportService.confirm(id)));
     }
 
     @GetMapping("/exception-reports/{id}/export/pdf")

@@ -18,8 +18,6 @@ public final class ExceptionReportMapper {
             .poNumber(report.getPurchaseOrder().getPoNumber())
             .reportedAt(report.getReportedAt())
             .reportedBy(report.getReportedBy())
-            .confirmedAt(report.getConfirmedAt())
-            .confirmedBy(report.getConfirmedBy())
             .note(report.getNote())
             .items(report.getItems().stream().map(ExceptionReportMapper::toItemResponse).toList())
             .createdAt(report.getCreatedAt())

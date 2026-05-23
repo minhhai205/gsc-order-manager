@@ -15,8 +15,6 @@ public class ExceptionReportResponse {
     private String poNumber;
     private Instant reportedAt;
     private String reportedBy;
-    private Instant confirmedAt;
-    private String confirmedBy;
     private String note;
     private List<ExceptionReportItemResponse> items;
     private Instant createdAt;
