@@ -332,7 +332,6 @@ Purpose:
 GET   /api/exception-reports
 GET   /api/exception-reports/{id}
 POST  /api/purchase-orders/{id}/exception-report
-PATCH /api/exception-reports/{id}/confirm
 GET   /api/exception-reports/{id}/export/pdf
 ```
 
@@ -341,7 +340,7 @@ Purpose:
 - Create exception reports for missing equipment.
 - Attach report to purchase order.
 - Export exception report as PDF.
-- Write audit log when an exception report is created or confirmed.
+- Write audit log when an exception report is created.
 
 Example report item:
 
@@ -523,36 +522,6 @@ Implementation notes:
 - Compute and store checksum after backup file creation.
 - Do not store raw database password in backup metadata.
 - Backup files should not be committed to git.
-
-## Report APIs
-
-```http
-GET /api/reports/purchase-orders
-GET /api/reports/contracts
-GET /api/reports/inventory
-GET /api/reports/shipping
-GET /api/reports/exception-reports
-GET /api/reports/purchase-orders/export/pdf
-```
-
-Purpose:
-
-- Provide management reporting.
-- Support filtering by date range, status, agency, contract, or equipment.
-
-Common query params:
-
-```text
-fromDate
-toDate
-status
-agencyId
-contractId
-equipmentId
-page
-size
-sort
-```
 
 ## Core Workflow
 
