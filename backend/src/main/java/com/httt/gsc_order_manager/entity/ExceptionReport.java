@@ -37,6 +37,11 @@ public class ExceptionReport extends BaseEntity {
     @Column(length = 150)
     private String reportedBy;
 
+    private Instant confirmedAt;
+
+    @Column(length = 150)
+    private String confirmedBy;
+
     @Column(columnDefinition = "text")
     private String note;
 
