@@ -4,4 +4,6 @@ target
 .mvn
 mvnw
 mvnw.cmd
+.vscode
+*.log
 **/.DS_Store

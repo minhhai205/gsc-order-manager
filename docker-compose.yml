@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # ========================================================
+  # DATABASE SERVICE (MySQL 8.0)
+  # ========================================================
+  db:
+    image: mysql:8.0
+    container_name: gsc-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: "gsc_order_manager"
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p123456"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ========================================================
+  # BACKEND SERVICE (Spring Boot)
+  # ========================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: gsc-backend
+    restart: always
+    ports:
+      - "8086:8080"
+    environment:
+      # Inject connection URL pointing to the "db" container instead of localhost
+      - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/gsc_order_manager?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ========================================================
+  # FRONTEND SERVICE (React + Nginx Proxy)
+  # ========================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: gsc-frontend
+    restart: always
+    ports:
+      - "8085:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:
+    driver: local
