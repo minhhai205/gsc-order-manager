@@ -9,6 +9,10 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+/**
+ * Đại diện cho một dòng thiết bị bị thiếu trong báo cáo ngoại lệ.
+ * Entity này lưu số lượng yêu cầu, số lượng kho đáp ứng được và số lượng còn thiếu.
+ */
 @Getter
 @Setter
 @Entity

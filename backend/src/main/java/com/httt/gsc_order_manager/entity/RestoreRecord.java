@@ -13,6 +13,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * Lưu metadata của một lần phục hồi dữ liệu từ file sao lưu.
+ * Entity này theo dõi bản backup được dùng, người thực hiện và kết quả phục hồi.
+ */
 @Getter
 @Setter
 @Entity

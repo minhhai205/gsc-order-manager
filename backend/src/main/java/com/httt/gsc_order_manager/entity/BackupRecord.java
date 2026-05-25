@@ -12,6 +12,10 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.Instant;
 
+/**
+ * Lưu metadata của các file sao lưu cơ sở dữ liệu do quản trị viên tạo.
+ * File SQL thực tế được lưu trên ổ đĩa, entity này lưu đường dẫn, trạng thái và checksum.
+ */
 @Getter
 @Setter
 @Entity

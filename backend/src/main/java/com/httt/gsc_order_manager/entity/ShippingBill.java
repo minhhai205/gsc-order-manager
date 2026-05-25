@@ -17,6 +17,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Đại diện cho hóa đơn vận chuyển do nhân viên kho lập cho một đơn đặt hàng.
+ * Entity này lưu trạng thái vận chuyển, địa chỉ giao hàng, ngày giao và các thiết bị thực xuất.
+ */
 @Getter
 @Setter
 @Entity

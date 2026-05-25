@@ -11,6 +11,10 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 
+/**
+ * Đại diện cho tài khoản người dùng nội bộ của hệ thống.
+ * Entity này lưu thông tin đăng nhập, mật khẩu đã mã hóa, phòng ban, vai trò và trạng thái tài khoản.
+ */
 @Getter
 @Setter
 @Entity

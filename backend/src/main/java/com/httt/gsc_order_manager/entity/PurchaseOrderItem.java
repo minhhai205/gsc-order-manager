@@ -10,6 +10,10 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 
+/**
+ * Đại diện cho một dòng thiết bị trong đơn đặt hàng.
+ * Entity này lưu số lượng đặt, đơn giá tại thời điểm tạo PO và thành tiền của dòng đó.
+ */
 @Getter
 @Setter
 @Entity

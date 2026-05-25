@@ -12,6 +12,9 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import java.time.Instant;
 
+/**
+ * Lớp cơ sở cho các entity cần khóa chính tự tăng và thời điểm tạo/cập nhật.
+ */
 @Getter
 @Setter
 @MappedSuperclass

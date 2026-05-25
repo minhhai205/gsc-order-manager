@@ -19,6 +19,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Đại diện cho đơn đặt hàng do cơ quan liên bang gửi đến GSC.
+ * Entity này liên kết với hợp đồng khung, lưu trạng thái kiểm duyệt và danh sách thiết bị yêu cầu.
+ */
 @Getter
 @Setter
 @Entity
@@ -31,10 +35,6 @@ public class PurchaseOrder extends BaseEntity {
     @ManyToOne(optional = false)
     @JoinColumn(name = "contract_id", nullable = false)
     private StandingContract contract;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "agency_id", nullable = false)
-    private FederalAgency agency;
 
     @Column(nullable = false)
     private LocalDate issueDate;

@@ -14,6 +14,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Đại diện cho báo cáo ngoại lệ khi một đơn đặt hàng hợp lệ không thể đáp ứng đủ hàng.
+ * Báo cáo này gom các dòng thiết bị bị thiếu của một purchase order.
+ */
 @Getter
 @Setter
 @Entity
