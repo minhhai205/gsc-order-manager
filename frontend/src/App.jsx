@@ -1,8 +1,9 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, ROLES } from './contexts/AuthContext';
 import { AppDataProvider } from './contexts/AppDataContext';
 import Layout from './components/layout/Layout';
+import ProtectedRoute from './components/layout/ProtectedRoute';
 import Overview from './pages/Overview';
 import ManageAgencies from './pages/co/ManageAgencies';
 import ManageContracts from './pages/co/ManageContracts';
@@ -25,13 +26,62 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Overview />} />
-              <Route path="co/agencies" element={<ManageAgencies />} />
-              <Route path="co/contracts" element={<ManageContracts />} />
-              <Route path="co/orders" element={<ManageOrders />} />
-              <Route path="fulfillment/checks" element={<AvailabilityChecks />} />
-              <Route path="fulfillment/shipping" element={<ShippingBills />} />
-              <Route path="warehouse/stock" style={{ overflow: 'hidden' }} element={<StockAdjustment />} />
-              <Route path="admin/utilities" element={<SystemAdmin />} />
+              <Route 
+                path="co/agencies" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.CONTRACTING_OFFICER]}>
+                    <ManageAgencies />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="co/contracts" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.CONTRACTING_OFFICER]}>
+                    <ManageContracts />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="co/orders" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.CONTRACTING_OFFICER]}>
+                    <ManageOrders />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="fulfillment/checks" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.ORDER_FULFILLMENT_STAFF]}>
+                    <AvailabilityChecks />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="fulfillment/shipping" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.ORDER_FULFILLMENT_STAFF]}>
+                    <ShippingBills />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="warehouse/stock" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_STAFF]}>
+                    <StockAdjustment />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="admin/utilities" 
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.SYSTEM_ADMIN]}>
+                    <SystemAdmin />
+                  </ProtectedRoute>
+                } 
+              />
             </Route>
           </Routes>
         </BrowserRouter>

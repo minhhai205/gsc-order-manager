@@ -12,7 +12,7 @@ export default function AvailabilityChecks() {
   } = useAppData();
   const { currentUser } = useAuth();
 
-  const isFulfillmentOrAdmin = currentUser?.role === ROLES.ORDER_FULFILLMENT_STAFF || currentUser?.role === ROLES.SYSTEM_ADMIN;
+  const isFulfillment = currentUser?.role === ROLES.ORDER_FULFILLMENT_STAFF;
 
   // Modals state
   const [showShortageModal, setShowShortageModal] = useState(false);
@@ -47,7 +47,7 @@ export default function AvailabilityChecks() {
     setShowDetailModal(true);
   };
 
-  if (!isFulfillmentOrAdmin) {
+  if (!isFulfillment) {
     return (
       <div className="flex-col align-center justify-center" style={{ minHeight: '60vh', gap: '16px' }}>
         <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '450px' }}>

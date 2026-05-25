@@ -45,34 +45,55 @@ const initialPurchaseOrders = [
     poNumber: 'PO-FBI-889', 
     contractId: 1, 
     issueDate: '2026-05-20', 
-    status: 'PENDING', 
+    priority: 'HIGH',
+    shippingAddress: '935 Pennsylvania Avenue NW, Washington, D.C.',
+    deliveryNotes: 'Deliver directly to the secure tactical operations center (TOC) on B3. Contact Agent Miller on arrival.',
+    officerRemarks: 'PO validated and approved for communication systems upgrades.',
+    trackingNumber: 'GSC-TRK-7Y2K8B',
+    carrier: 'GSC_CARGO',
+    status: 'SHIPPED', 
     items: [
-      { equipmentId: 1, quantity: 4, price: 12500 },
-      { equipmentId: 3, quantity: 5, price: 4800 }
+      { equipmentId: 1, quantity: 4, catalogPrice: 12500, price: 12500 },
+      { equipmentId: 3, quantity: 5, catalogPrice: 4800, price: 4800 }
     ], 
     totalAmount: 74000,
-    validationErrors: [] 
+    validationErrors: [],
+    statusHistory: [
+      { timestamp: '2026-05-20 09:00:00', action: 'DIGITIZED', user: 'Agent John Miller (CO)', comment: 'Purchase Order digitized from secure FBI paper form.' },
+      { timestamp: '2026-05-20 10:15:00', action: 'COMPLIANCE_AUDITED', user: 'Agent John Miller (CO)', comment: 'Compliance checks passed successfully.' },
+      { timestamp: '2026-05-20 13:30:00', action: 'INVENTORY_ALLOCATED', user: 'Sarah Connor (Fulfillment)', comment: 'Stock quantities checked and successfully allocated in Warehouse.' },
+      { timestamp: '2026-05-20 15:45:00', action: 'SHIPPED', user: 'Sarah Connor (Fulfillment)', comment: 'Shipping bill SHP-1 issued. Stock deducted and carrier GSC_CARGO assigned.' }
+    ]
   },
   { 
     id: 2, 
     poNumber: 'PO-NASA-102', 
     contractId: 2, 
     issueDate: '2026-05-22', 
+    priority: 'CRITICAL',
+    shippingAddress: '300 E Street SW, Washington, D.C.',
+    deliveryNotes: 'Urgent spacecraft simulation rack upgrades.',
+    officerRemarks: 'Special approval for customized price points granted by CO.',
+    trackingNumber: '',
+    carrier: 'FEDEX',
     status: 'PENDING', 
     items: [
-      { equipmentId: 2, quantity: 3, price: 24000 },
-      { equipmentId: 4, quantity: 6, price: 8500 }
+      { equipmentId: 2, quantity: 3, catalogPrice: 24000, price: 23500 }, // customized price override
+      { equipmentId: 4, quantity: 6, catalogPrice: 8500, price: 8500 }
     ], 
-    totalAmount: 123000,
-    validationErrors: []
+    totalAmount: 121500,
+    validationErrors: [],
+    statusHistory: [
+      { timestamp: '2026-05-22 14:00:00', action: 'DIGITIZED', user: 'Agent John Miller (CO)', comment: 'Purchase Order digitized with custom catalog price adjustments.' }
+    ]
   }
 ];
 
 const initialAuditLogs = [
-  { id: 1, timestamp: '2026-05-25T08:00:00', action: 'CREATE', entity: 'FederalAgency', details: 'Created agency FBI-GSC', user: 'CO_OFFICER' },
-  { id: 2, timestamp: '2026-05-25T08:15:00', action: 'CREATE', entity: 'FederalAgency', details: 'Created agency NASA-GSC', user: 'CO_OFFICER' },
-  { id: 3, timestamp: '2026-05-25T09:00:00', action: 'CREATE', entity: 'StandingContract', details: 'Issued contract GSC-FBI-2026 (Limit: $500,000)', user: 'CO_OFFICER' },
-  { id: 4, timestamp: '2026-05-25T09:30:00', action: 'IMPORT', entity: 'Equipment', details: 'Imported equipment EQ-SAT-04 stock', user: 'WH_STAFF' }
+  { id: 1, timestamp: '2026-05-25 08:00:00', action: 'CREATE', entity: 'FederalAgency', details: 'Created agency FBI-GSC', user: 'John Miller' },
+  { id: 2, timestamp: '2026-05-25 08:15:00', action: 'CREATE', entity: 'FederalAgency', details: 'Created agency NASA-GSC', user: 'John Miller' },
+  { id: 3, timestamp: '2026-05-25 09:00:00', action: 'CREATE', entity: 'StandingContract', details: 'Issued contract GSC-FBI-2026 (Limit: $500,000)', user: 'John Miller' },
+  { id: 4, timestamp: '2026-05-25 09:30:00', action: 'IMPORT', entity: 'Equipment', details: 'Imported equipment EQ-SAT-04 stock', user: 'Carl Jenkins' }
 ];
 
 export function AppDataProvider({ children }) {
@@ -162,25 +183,96 @@ export function AppDataProvider({ children }) {
       const eqId = parseInt(item.equipmentId);
       const qty = parseInt(item.quantity);
       const eq = equipment.find(e => e.id === eqId);
-      const price = eq ? eq.price : 0;
+      
+      // Support custom overrides of prices
+      const price = item.customPrice ? parseFloat(item.customPrice) : (eq ? eq.price : 0);
       totalAmount += price * qty;
-      return { equipmentId: eqId, quantity: qty, price };
+      
+      return { 
+        equipmentId: eqId, 
+        quantity: qty, 
+        catalogPrice: eq ? eq.price : 0, 
+        price 
+      };
     });
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const username = currentUser ? currentUser.name : 'SYSTEM';
 
     const created = {
       id: Date.now(),
       poNumber: poData.poNumber,
       contractId,
       issueDate: poData.issueDate || new Date().toISOString().slice(0, 10),
+      priority: poData.priority || 'MEDIUM',
+      shippingAddress: poData.shippingAddress || '1600 Pennsylvania Ave NW, Washington, D.C.',
+      deliveryNotes: poData.deliveryNotes || '',
+      officerRemarks: poData.officerRemarks || '',
+      trackingNumber: '',
+      carrier: poData.carrier || 'GSC_CARGO',
       status: 'PENDING',
       items,
       totalAmount,
-      validationErrors: []
+      validationErrors: [],
+      statusHistory: [
+        { timestamp, action: 'DIGITIZED', user: username, comment: 'Purchase order digitized from paper and metadata values saved.' }
+      ]
     };
 
     setPurchaseOrders(prev => [created, ...prev]);
     addAuditLog('CREATE', 'PurchaseOrder', `Purchase Order ${created.poNumber} digitized ($${created.totalAmount.toLocaleString()})`);
     return created;
+  };
+
+  const handleUpdatePo = (id, data) => {
+    let totalAmount = 0;
+    const items = data.items.map(item => {
+      const eqId = parseInt(item.equipmentId);
+      const qty = parseInt(item.quantity);
+      const eq = equipment.find(e => e.id === eqId);
+      
+      const price = item.customPrice ? parseFloat(item.customPrice) : (eq ? eq.price : 0);
+      totalAmount += price * qty;
+      
+      return { 
+        equipmentId: eqId, 
+        quantity: qty, 
+        catalogPrice: eq ? eq.price : 0, 
+        price 
+      };
+    });
+
+    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const username = currentUser ? currentUser.name : 'SYSTEM';
+
+    setPurchaseOrders(prev => prev.map(po => {
+      if (po.id === id) {
+        const updatedHistory = [
+          ...po.statusHistory,
+          { timestamp, action: 'MODIFIED', user: username, comment: 'Officer adjusted order metadata parameters or customized line item pricing.' }
+        ];
+
+        return { 
+          ...po, 
+          poNumber: data.poNumber, 
+          contractId: parseInt(data.contractId), 
+          issueDate: data.issueDate,
+          priority: data.priority || po.priority,
+          shippingAddress: data.shippingAddress || po.shippingAddress,
+          deliveryNotes: data.deliveryNotes || po.deliveryNotes,
+          officerRemarks: data.officerRemarks || po.officerRemarks,
+          carrier: data.carrier || po.carrier,
+          items,
+          totalAmount,
+          status: 'PENDING',
+          validationErrors: [],
+          statusHistory: updatedHistory
+        };
+      }
+      return po;
+    }));
+
+    addAuditLog('UPDATE', 'PurchaseOrder', `Updated purchase order specifications for ID: ${id}`);
   };
 
   const validatePurchaseOrder = (poId) => {
@@ -216,12 +308,27 @@ export function AppDataProvider({ children }) {
         const isValid = errors.length === 0;
         const nextStatus = isValid ? 'OUTSTANDING' : 'INVALID';
         
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        const username = currentUser ? currentUser.name : 'SYSTEM';
+        const updatedHistory = [
+          ...po.statusHistory,
+          { 
+            timestamp, 
+            action: 'COMPLIANCE_AUDITED', 
+            user: username, 
+            comment: isValid 
+              ? 'Passed whitelists budget and catalog allowed items verification checks.' 
+              : `Compliance check failed: ${errors.join('; ')}`
+          }
+        ];
+
         addAuditLog('VALIDATE_PO', 'PurchaseOrder', `Validated PO ${po.poNumber} -> ${nextStatus}. Errors: ${errors.length}`);
         
         return {
           ...po,
           status: nextStatus,
-          validationErrors: errors
+          validationErrors: errors,
+          statusHistory: updatedHistory
         };
       }
       return po;
@@ -245,6 +352,21 @@ export function AppDataProvider({ children }) {
       checksum: 'SHA256:' + Math.random().toString(36).substring(2, 10).toUpperCase()
     };
 
+    // Update status history
+    setPurchaseOrders(prev => prev.map(o => {
+      if (o.id === po.id) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+        return {
+          ...o,
+          statusHistory: [
+            ...o.statusHistory,
+            { timestamp, action: 'REJECTION_GENERATED', user: currentUser ? currentUser.name : 'SYSTEM', comment: 'Complied rejection letter issued to draft status due to whitelists violations.' }
+          ]
+        };
+      }
+      return o;
+    }));
+
     setRejectionLetters(prev => [newLetter, ...prev]);
     addAuditLog('ISSUE_REJECTION_LETTER', 'RejectionLetter', `Generated draft rejection letter for PO ${po.poNumber}`);
     return newLetter;
@@ -253,6 +375,22 @@ export function AppDataProvider({ children }) {
   const handleSendRejectionLetter = (letterId) => {
     setRejectionLetters(prev => prev.map(letter => {
       if (letter.id === letterId) {
+        // Update purchase order status to REJECTED
+        setPurchaseOrders(prevPOs => prevPOs.map(o => {
+          if (o.id === letter.poId) {
+            const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+            return {
+              ...o,
+              status: 'REJECTED',
+              statusHistory: [
+                ...o.statusHistory,
+                { timestamp, action: 'REJECTED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Official Rejection Letter sent and emailed to partner agency: ${letter.agencyEmail}.` }
+              ]
+            };
+          }
+          return o;
+        }));
+
         addAuditLog('ISSUE_REJECTION_LETTER', 'RejectionLetter', `Issued and sent Rejection Letter for PO ${letter.poNumber} to ${letter.agencyEmail}`);
         return { ...letter, status: 'ISSUED' };
       }
@@ -278,13 +416,35 @@ export function AppDataProvider({ children }) {
       }
     });
 
+    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    const username = currentUser ? currentUser.name : 'SYSTEM';
+
     if (shortages.length > 0) {
+      setPurchaseOrders(prev => prev.map(o => {
+        if (o.id === po.id) {
+          return {
+            ...o,
+            statusHistory: [
+              ...o.statusHistory,
+              { timestamp, action: 'SHORTAGE_FLAGGED', user: username, comment: `Stock checks failed. Quantity deficits detected on ${shortages.length} items.` }
+            ]
+          };
+        }
+        return o;
+      }));
       return { shortages, success: false };
     } else {
       setPurchaseOrders(prev => prev.map(o => {
         if (o.id === po.id) {
           addAuditLog('INVENTORY_CHECK', 'PurchaseOrder', `Inventory check cleared for PO ${po.poNumber}. Stock is sufficient.`);
-          return { ...o, status: 'READY_TO_SHIP' };
+          return { 
+            ...o, 
+            status: 'READY_TO_SHIP',
+            statusHistory: [
+              ...o.statusHistory,
+              { timestamp, action: 'INVENTORY_ALLOCATED', user: username, comment: 'Stock quantities checked. Necessary stock is allocated and held successfully.' }
+            ]
+          };
         }
         return o;
       }));
@@ -306,8 +466,16 @@ export function AppDataProvider({ children }) {
     
     setPurchaseOrders(prev => prev.map(o => {
       if (o.id === po.id) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
         addAuditLog('CREATE_EXCEPTION_REPORT', 'ExceptionReport', `Exception report generated for PO ${o.poNumber} (Missing items: ${shortages.length})`);
-        return { ...o, status: 'INVENTORY_CHECKED' };
+        return { 
+          ...o, 
+          status: 'INVENTORY_CHECKED',
+          statusHistory: [
+            ...o.statusHistory,
+            { timestamp, action: 'EXCEPTION_REPORTED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Deficit exception report EXP-${report.id} registered for procurement.` }
+          ]
+        };
       }
       return o;
     }));
@@ -341,8 +509,11 @@ export function AppDataProvider({ children }) {
       return c;
     }));
 
+    const trackingNumber = 'GSC-TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+    const billId = Date.now();
+
     const bill = {
-      id: Date.now(),
+      id: billId,
       poId: po.id,
       poNumber: po.poNumber,
       shippingDate: new Date().toISOString().slice(0, 10),
@@ -355,8 +526,17 @@ export function AppDataProvider({ children }) {
 
     setPurchaseOrders(prev => prev.map(o => {
       if (o.id === po.id) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
         addAuditLog('ISSUE_SHIPPING_BILL', 'ShippingBill', `Shipping bill issued and inventory deducted for PO ${o.poNumber}`);
-        return { ...o, status: 'SHIPPED' };
+        return { 
+          ...o, 
+          status: 'SHIPPED', 
+          trackingNumber,
+          statusHistory: [
+            ...o.statusHistory,
+            { timestamp, action: 'SHIPPED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Secure Shipping Bill SHP-${billId} issued. Stock deducted, tracking code: ${trackingNumber}.` }
+          ]
+        };
       }
       return o;
     }));
@@ -367,8 +547,16 @@ export function AppDataProvider({ children }) {
   const closeAndArchivePo = (poId) => {
     setPurchaseOrders(prev => prev.map(po => {
       if (po.id === poId) {
+        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
         addAuditLog('CLOSE_PURCHASE_ORDER', 'PurchaseOrder', `Purchase Order ${po.poNumber} closed and archived under code ARC-${po.id}`);
-        return { ...po, status: 'CLOSED' };
+        return { 
+          ...po, 
+          status: 'CLOSED',
+          statusHistory: [
+            ...po.statusHistory,
+            { timestamp, action: 'ARCHIVED', user: currentUser ? currentUser.name : 'SYSTEM', comment: 'Purchase order closed and stored under long-term system archive logs.' }
+          ]
+        };
       }
       return po;
     }));
@@ -472,31 +660,6 @@ export function AppDataProvider({ children }) {
   const handleDeleteEquipment = (id) => {
     setEquipment(prev => prev.filter(e => e.id !== id));
     addAuditLog('DELETE', 'Equipment', `Deleted equipment catalog item for ID: ${id}`);
-  };
-
-  const handleUpdatePo = (id, data) => {
-    let totalAmount = 0;
-    const items = data.items.map(item => {
-      const eqId = parseInt(item.equipmentId);
-      const qty = parseInt(item.quantity);
-      const eq = equipment.find(e => e.id === eqId);
-      const price = eq ? eq.price : 0;
-      totalAmount += price * qty;
-      return { equipmentId: eqId, quantity: qty, price };
-    });
-
-    setPurchaseOrders(prev => prev.map(po => po.id === id ? { 
-      ...po, 
-      poNumber: data.poNumber, 
-      contractId: parseInt(data.contractId), 
-      issueDate: data.issueDate,
-      items,
-      totalAmount,
-      status: 'PENDING',
-      validationErrors: []
-    } : po));
-
-    addAuditLog('UPDATE', 'PurchaseOrder', `Updated and digitized purchase order details for ID: ${id}`);
   };
 
   const handleDeletePo = (id) => {

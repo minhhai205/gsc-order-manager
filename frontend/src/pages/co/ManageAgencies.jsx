@@ -9,7 +9,7 @@ export default function ManageAgencies() {
   const { agencies, handleCreateAgency, handleUpdateAgency, handleDeleteAgency, toggleAgencyStatus } = useAppData();
   const { currentUser } = useAuth();
 
-  const isCoOrAdmin = currentUser?.role === ROLES.CONTRACTING_OFFICER || currentUser?.role === ROLES.SYSTEM_ADMIN;
+  const isCo = currentUser?.role === ROLES.CONTRACTING_OFFICER;
 
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -71,7 +71,7 @@ export default function ManageAgencies() {
     setShowDeleteConfirm(false);
   };
 
-  if (!isCoOrAdmin) {
+  if (!isCo) {
     return (
       <div className="flex-col align-center justify-center" style={{ minHeight: '60vh', gap: '16px' }}>
         <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '450px' }}>

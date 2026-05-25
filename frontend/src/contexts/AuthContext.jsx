@@ -10,10 +10,10 @@ export const ROLES = {
 };
 
 const DEFAULT_USERS = [
-  { username: 'admin', password: '123', role: ROLES.SYSTEM_ADMIN, name: 'System Administrator' },
-  { username: 'officer', password: '123', role: ROLES.CONTRACTING_OFFICER, name: 'Agent John Miller (CO)' },
-  { username: 'fulfillment', password: '123', role: ROLES.ORDER_FULFILLMENT_STAFF, name: 'Sarah Connor (Fulfillment)' },
-  { username: 'warehouse', password: '123', role: ROLES.WAREHOUSE_STAFF, name: 'Carl Jenkins (Warehouse)' }
+  { username: 'admin', password: '123', role: ROLES.SYSTEM_ADMIN, name: 'System Administrator', themeClass: 'default', notifications: { emailAlerts: true, stockAlerts: true, dbAlerts: true } },
+  { username: 'officer', password: '123', role: ROLES.CONTRACTING_OFFICER, name: 'Agent John Miller (CO)', themeClass: 'tet', notifications: { emailAlerts: true, stockAlerts: false, dbAlerts: false } },
+  { username: 'fulfillment', password: '123', role: ROLES.ORDER_FULFILLMENT_STAFF, name: 'Sarah Connor (Fulfillment)', themeClass: 'summer', notifications: { emailAlerts: false, stockAlerts: true, dbAlerts: false } },
+  { username: 'warehouse', password: '123', role: ROLES.WAREHOUSE_STAFF, name: 'Carl Jenkins (Warehouse)', themeClass: 'spring', notifications: { emailAlerts: false, stockAlerts: true, dbAlerts: false } }
 ];
 
 export function AuthProvider({ children }) {
@@ -28,6 +28,15 @@ export function AuthProvider({ children }) {
     const saved = localStorage.getItem('gsc-current-user');
     return saved ? JSON.parse(saved) : null;
   });
+
+  // Apply stored seasonal themes class dynamically to body element
+  useEffect(() => {
+    if (currentUser && currentUser.themeClass) {
+      document.body.className = currentUser.themeClass;
+    } else {
+      document.body.className = 'default';
+    }
+  }, [currentUser]);
 
   const login = (username, password) => {
     const matched = users.find(u => u.username === username.toLowerCase() && u.password === password);
@@ -44,7 +53,14 @@ export function AuthProvider({ children }) {
     if (exists) {
       return { success: false, message: 'Username already exists!' };
     }
-    const newUser = { username: username.toLowerCase(), password, name, role };
+    const newUser = { 
+      username: username.toLowerCase(), 
+      password, 
+      name, 
+      role, 
+      themeClass: 'default',
+      notifications: { emailAlerts: true, stockAlerts: true, dbAlerts: false } 
+    };
     const updatedUsers = [...users, newUser];
     setUsers(updatedUsers);
     localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
@@ -54,15 +70,31 @@ export function AuthProvider({ children }) {
   const logout = () => {
     setCurrentUser(null);
     localStorage.removeItem('gsc-current-user');
+    document.body.className = 'default';
+  };
+
+  const updateProfile = (name, password, themeClass, notifications) => {
+    if (!currentUser) return { success: false, message: 'No active session!' };
+    
+    const updated = { ...currentUser, name, password, themeClass, notifications };
+    
+    // Write changes back to active storage registry
+    const updatedUsers = users.map(u => u.username === currentUser.username ? updated : u);
+    setUsers(updatedUsers);
+    localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
+    
+    setCurrentUser(updated);
+    localStorage.setItem('gsc-current-user', JSON.stringify(updated));
+    return { success: true };
   };
 
   const hasAccess = (allowedRoles) => {
     if (!currentUser) return false;
-    return allowedRoles.includes(currentUser.role) || currentUser.role === ROLES.SYSTEM_ADMIN;
+    return allowedRoles.includes(currentUser.role);
   };
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, register, logout, hasAccess, users }}>
+    <AuthContext.Provider value={{ currentUser, login, register, logout, updateProfile, hasAccess, users }}>
       {children}
     </AuthContext.Provider>
   );

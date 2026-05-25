@@ -12,7 +12,7 @@ export default function StockAdjustment() {
   } = useAppData();
   const { currentUser } = useAuth();
 
-  const isWarehouseOrAdmin = currentUser?.role === ROLES.WAREHOUSE_STAFF || currentUser?.role === ROLES.SYSTEM_ADMIN;
+  const isWarehouse = currentUser?.role === ROLES.WAREHOUSE_STAFF;
 
   // Modals state
   const [showAdjustModal, setShowAdjustModal] = useState(false);
@@ -88,7 +88,7 @@ export default function StockAdjustment() {
     setShowDeleteConfirm(false);
   };
 
-  if (!isWarehouseOrAdmin) {
+  if (!isWarehouse) {
     return (
       <div className="flex-col align-center justify-center" style={{ minHeight: '60vh', gap: '16px' }}>
         <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '450px' }}>

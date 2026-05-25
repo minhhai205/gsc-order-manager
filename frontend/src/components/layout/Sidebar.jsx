@@ -9,11 +9,11 @@ export default function Sidebar() {
   if (!currentUser) return null;
   const { role } = currentUser;
 
-  const showAgencies = role === ROLES.SYSTEM_ADMIN || role === ROLES.CONTRACTING_OFFICER;
-  const showOrders = role === ROLES.SYSTEM_ADMIN || role === ROLES.CONTRACTING_OFFICER;
-  const showChecks = role === ROLES.SYSTEM_ADMIN || role === ROLES.ORDER_FULFILLMENT_STAFF;
-  const showShipping = role === ROLES.SYSTEM_ADMIN || role === ROLES.ORDER_FULFILLMENT_STAFF;
-  const showWarehouse = role === ROLES.SYSTEM_ADMIN || role === ROLES.WAREHOUSE_STAFF;
+  const showAgencies = role === ROLES.CONTRACTING_OFFICER;
+  const showOrders = role === ROLES.CONTRACTING_OFFICER;
+  const showChecks = role === ROLES.ORDER_FULFILLMENT_STAFF;
+  const showShipping = role === ROLES.ORDER_FULFILLMENT_STAFF;
+  const showWarehouse = role === ROLES.WAREHOUSE_STAFF;
   const showAdmin = role === ROLES.SYSTEM_ADMIN;
 
   return (
