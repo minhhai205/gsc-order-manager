@@ -12,7 +12,7 @@ services:
       MYSQL_ROOT_PASSWORD: "123456"
       MYSQL_DATABASE: "gsc_order_manager"
     ports:
-      - "3308:3306"
+      - "3309:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
@@ -31,7 +31,7 @@ services:
     container_name: gsc-backend
     restart: always
     ports:
-      - "8082:8080"
+      - "8086:8080"
     environment:
       # Inject connection URL pointing to the "db" container instead of localhost
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/gsc_order_manager?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
@@ -52,7 +52,7 @@ services:
     container_name: gsc-frontend
     restart: always
     ports:
-      - "8081:80"
+      - "8085:80"
     depends_on:
       - backend
 

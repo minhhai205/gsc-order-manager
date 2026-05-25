@@ -371,3 +371,355 @@
   font-size: var(--font-size-xs);
   color: var(--text-muted);
 }
+
+/* ═══════════════════════════════════════════════════════
+   PREMIUM CUSTOM UTILITY STYLES (TicketRush aesthetics)
+   ═══════════════════════════════════════════════════════ */
+
+/* Stat colors backgrounds */
+.primary-bg { background-color: var(--color-primary-light); color: var(--color-primary); }
+.secondary-bg { background-color: var(--color-secondary-light); color: var(--color-secondary); }
+.success-bg { background-color: var(--color-success-bg); color: var(--color-success); }
+.warning-bg { background-color: var(--color-warning-bg); color: var(--color-warning); }
+
+/* Audit border markers */
+.border-left-success { border-left-color: var(--color-success) !important; }
+.border-left-primary { border-left-color: var(--color-primary) !important; }
+
+/* Progress bar system */
+.progress-bar-bg {
+  background-color: var(--bg-secondary);
+  border-radius: 9999px;
+  height: 6px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Warning & Info Alert layout boxes */
+.warning-alert {
+  background-color: var(--color-warning-bg);
+  border: 1px solid var(--color-warning);
+  color: var(--color-warning);
+  padding: 14px 18px;
+  border-radius: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  line-height: 1.5;
+}
+
+/* Search bar styling */
+.search-bar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.search-input {
+  padding-left: 32px !important;
+  transition: all 0.2s;
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-light) !important;
+}
+
+.search-input:focus {
+  border-color: var(--border-focus) !important;
+  background-color: var(--card-bg) !important;
+}
+
+/* Pulse keyframes for logo */
+@keyframes spinPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); color: var(--color-secondary); }
+  100% { transform: scale(1); }
+}
+
+.pulse-icon {
+  animation: spinPulse 3s infinite ease-in-out;
+  color: var(--color-primary);
+}
+
+/* Modal form input adjustments */
+.modal-body label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Role header labels */
+.role-switcher-container {
+  border-left: 1px solid var(--border-light);
+  padding-left: 16px;
+}
+
+.role-icon {
+  color: var(--color-primary);
+}
+
+.role-label {
+  font-size: var(--font-size-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════════════════════
+   PREMIUM LOGIN & REGISTER AUTH STYLING (Inspired by TicketRush)
+   ═══════════════════════════════════════════════════════ */
+
+.auth-wrapper {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(circle at 10% 15%, var(--color-primary-light) 0%, transparent 40%),
+    radial-gradient(circle at 90% 85%, var(--color-secondary-light) 0%, transparent 45%);
+}
+
+.silk-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.silk-ribbon {
+  position: absolute;
+  width: 140vw;
+  height: 100vh;
+  filter: blur(80px);
+  transform-origin: center;
+  animation: floatRibbon 20s ease-in-out infinite alternate;
+  background: linear-gradient(
+    135deg,
+    transparent 0%,
+    var(--color-primary-light) 25%,
+    var(--color-secondary-light) 60%,
+    transparent 100%
+  );
+}
+
+.silk-1 {
+  top: -10%;
+  left: -20%;
+  animation-delay: 0s;
+}
+
+.silk-2 {
+  right: -20%;
+  bottom: -15%;
+  animation-duration: 25s;
+  animation-direction: alternate-reverse;
+  background: linear-gradient(
+    225deg,
+    transparent,
+    var(--color-secondary-light),
+    var(--color-primary-light),
+    transparent
+  );
+}
+
+@keyframes floatRibbon {
+  0% { transform: rotate(-4deg) translate(0, 0) scale(1); }
+  50% { transform: rotate(5deg) translate(4%, 3%) scale(1.05); }
+  100% { transform: rotate(-6deg) translate(-3%, -2%) scale(1); }
+}
+
+/* Glassmorphism auth card panel */
+.glass-panel.auth-card {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 460px;
+  background-color: rgba(21, 28, 44, 0.75);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-medium);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 
+    0 20px 50px -12px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* For light mode adjustments on glass card */
+html.light .glass-panel.auth-card, :root:not(.dark) .glass-panel.auth-card {
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 20px 50px -12px rgba(15, 23, 42, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.auth-header {
+  text-align: center;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.auth-brand h2 {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.auth-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Input decorators */
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.auth-input {
+  padding-left: 42px !important;
+  background-color: var(--bg-secondary) !important;
+}
+
+.auth-select {
+  background-color: var(--bg-secondary) !important;
+  cursor: pointer;
+}
+
+.auth-label {
+  font-size: var(--font-size-xs) !important;
+  font-weight: 700 !important;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 12px !important;
+  font-size: var(--font-size-sm) !important;
+  margin-top: 10px;
+}
+
+.auth-footer {
+  text-align: center;
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+}
+
+.error-alert {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: var(--font-size-xs);
+}
+
+.success-alert {
+  background-color: var(--color-success-bg);
+  border: 1px solid var(--color-success);
+  color: var(--color-success);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: var(--font-size-xs);
+}
+
+/* Quick Logins Selection Panel */
+.quick-logins-panel {
+  border-top: 1px dashed var(--border-light);
+  padding-top: 20px;
+  margin-top: 10px;
+}
+
+.quick-login-title {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.quick-login-grid {
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.quick-login-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-light);
+  background-color: var(--bg-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  gap: 2px;
+}
+
+.quick-login-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-focus);
+  box-shadow: var(--shadow-sm);
+}
+
+.quick-login-btn strong {
+  font-size: var(--font-size-xs);
+  color: var(--text-primary);
+}
+
+.quick-login-btn small {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Color thematic coding buttons */
+.co-btn:hover { background-color: var(--color-primary-light) !important; }
+.fulfillment-btn:hover { background-color: var(--color-secondary-light) !important; }
+.warehouse-btn:hover { background-color: var(--color-warning-bg) !important; }
+.admin-btn:hover { background-color: var(--color-success-bg) !important; }
+
+
