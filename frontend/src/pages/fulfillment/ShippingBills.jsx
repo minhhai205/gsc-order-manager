@@ -1,36 +1,60 @@
 import React, { useState } from 'react';
-import { useAppData } from '../contexts/AppDataContext';
-import { useAuth, ROLES } from '../contexts/AuthContext';
-import Modal from '../components/ui/Modal';
-import Badge from '../components/ui/Badge';
-import { Plus, Check, Truck, User, Calendar, FileText } from 'lucide-react';
+import { useAppData } from '../../contexts/AppDataContext';
+import { useAuth, ROLES } from '../../contexts/AuthContext';
+import Modal from '../../components/ui/Modal';
+import Badge from '../../components/ui/Badge';
+import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck } from 'lucide-react';
 
-export default function Shipping() {
-  const { purchaseOrders, contracts, agencies, shippingBills, equipment, handleConfirmShipping } = useAppData();
+export default function ShippingBills() {
+  const { purchaseOrders, shippingBills, equipment, handleConfirmShipping } = useAppData();
   const { currentUser } = useAuth();
-  const role = currentUser?.role;
 
-  const isFulfillmentOrAdmin = role === ROLES.ORDER_FULFILLMENT_STAFF || role === ROLES.SYSTEM_ADMIN;
+  const isFulfillmentOrAdmin = currentUser?.role === ROLES.ORDER_FULFILLMENT_STAFF || currentUser?.role === ROLES.SYSTEM_ADMIN;
 
   // Modals state
   const [showShippingModal, setShowShippingModal] = useState(false);
-  const [selectedShippingPo, setSelectedShippingPo] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+
+  // Active records state
+  const [selectedPo, setSelectedPo] = useState(null);
+  const [selectedBill, setSelectedBill] = useState(null);
 
   const openShippingForm = (po) => {
-    setSelectedShippingPo(po);
+    setSelectedPo(po);
     setShowShippingModal(true);
   };
 
   const onSubmitShipping = (e) => {
     e.preventDefault();
-    if (!selectedShippingPo) return;
-    const success = handleConfirmShipping(selectedShippingPo);
+    if (!selectedPo) return;
+    const success = handleConfirmShipping(selectedPo);
     if (!success) {
-      alert("Error: Stock levels are insufficient. Run inventory availability checks again.");
+      alert("Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
+    } else {
+      alert(`Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
     }
     setShowShippingModal(false);
-    setSelectedShippingPo(null);
+    setSelectedPo(null);
   };
+
+  const openDetail = (bill) => {
+    setSelectedBill(bill);
+    setShowDetailModal(true);
+  };
+
+  if (!isFulfillmentOrAdmin) {
+    return (
+      <div className="flex-col align-center justify-center" style={{ minHeight: '60vh', gap: '16px' }}>
+        <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '450px' }}>
+          <ShieldAlert size={48} style={{ margin: '0 auto 12px auto' }} />
+          <h3>Access Level Restrict</h3>
+          <p style={{ fontSize: 'var(--font-size-sm)', margin: '8px 0 0 0', lineHeight: 1.5 }}>
+            This page is strictly reserved for **Order Fulfillment Staff** to dispatch cargo shipments.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   // Orders that are ready to be shipped
   const readyOrders = purchaseOrders.filter(po => po.status === 'READY_TO_SHIP');
@@ -38,25 +62,28 @@ export default function Shipping() {
   return (
     <div>
       <div className="flex-row justify-between align-center" style={{ marginBottom: '24px' }}>
-        <h2>Shipping & Logistics Center</h2>
+        <div>
+          <h2>Shipping & Dispatch Logistics (Fulfillment Concern)</h2>
+          <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)' }}>Confirm cargo allocations, record contract expenses, and issue secure Cargo Shipping Bills.</p>
+        </div>
       </div>
 
-      <div className="grid-cols-3" style={{ marginBottom: '32px' }}>
+      <div className="grid-cols-3 gap-lg" style={{ marginBottom: '32px' }}>
         {/* Shipped Bills Registry */}
         <div className="box-card col-span-2">
           <h3>Issued Shipping Bills Registry (UC8)</h3>
-          <p className="card-description">Official cargo transport records including stock verification signatures and security checksums.</p>
+          <p className="card-description">Official transportation invoices containing stock verification signatures and logistics checksums.</p>
 
           <div className="table-container">
             <table className="premium-table">
               <thead>
                 <tr>
                   <th>Shipment Ref</th>
-                  <th>Purchase Order</th>
+                  <th>PO Reference</th>
                   <th>Shipping Date</th>
                   <th>Consigned Cargo</th>
-                  <th>Delivery Status</th>
-                  <th>Logistics Checksum</th>
+                  <th>Status</th>
+                  <th>Operation Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -83,7 +110,13 @@ export default function Shipping() {
                         </div>
                       </td>
                       <td><span className="badge badge-success">ARRIVED / {bill.status}</span></td>
-                      <td><small style={{ fontFamily: 'monospace', color: 'var(--text-muted)' }}>{bill.checksum}</small></td>
+                      <td>
+                        <div className="flex-row align-center gap-xs">
+                          <button onClick={() => openDetail(bill)} className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }}>
+                            <Eye size={14} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -94,8 +127,8 @@ export default function Shipping() {
 
         {/* Ready to ship sidebar checklist */}
         <div className="box-card">
-          <h3>Ready for Shipping</h3>
-          <p className="card-description">Inventory allocation completed successfully. Dispatch cargo now.</p>
+          <h3>Ready for Dispatch</h3>
+          <p className="card-description">Stock allocations completed successfully. Dispatch cargo immediately.</p>
 
           <div className="flex-col gap-sm" style={{ maxHeight: '350px', overflowY: 'auto' }}>
             {readyOrders.length === 0 ? (
@@ -116,7 +149,6 @@ export default function Shipping() {
                     onClick={() => openShippingForm(po)} 
                     className="btn btn-success"
                     style={{ fontSize: '11px', padding: '6px 10px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', alignSelf: 'flex-start' }}
-                    disabled={!isFulfillmentOrAdmin}
                   >
                     <Truck size={12} />
                     Issue Shipping Bill
@@ -130,7 +162,7 @@ export default function Shipping() {
 
       {/* DISPATCH SHIPPING BILL FORM MODAL */}
       <Modal isOpen={showShippingModal} onClose={() => setShowShippingModal(false)} title="Issue Cargo Shipping Bill (UC8)">
-        {selectedShippingPo && (
+        {selectedPo && (
           <form onSubmit={onSubmitShipping} className="flex-col gap-md">
             <div className="box-card" style={{ backgroundColor: 'var(--card-bg-subtle)', border: '1px dashed var(--border-light)' }}>
               <h4 style={{ margin: '0 0 10px 0', borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>Consignee Invoice Detail</h4>
@@ -138,7 +170,7 @@ export default function Shipping() {
               <div className="grid-cols-2" style={{ fontSize: 'var(--font-size-sm)', gap: '12px 24px' }}>
                 <div className="flex-row align-center gap-xs">
                   <FileText size={16} style={{ color: 'var(--color-primary)' }} />
-                  <span>Order Reference: <strong>{selectedShippingPo.poNumber}</strong></span>
+                  <span>Order Reference: <strong>{selectedPo.poNumber}</strong></span>
                 </div>
                 <div className="flex-row align-center gap-xs">
                   <Calendar size={16} style={{ color: 'var(--color-primary)' }} />
@@ -150,7 +182,7 @@ export default function Shipping() {
               
               <h5 style={{ margin: '0 0 6px 0', fontWeight: 700 }}>Dispatching Cargo List:</h5>
               <ul className="flex-col gap-xs" style={{ paddingLeft: '20px', fontSize: 'var(--font-size-sm)' }}>
-                {selectedShippingPo.items.map((item, idx) => {
+                {selectedPo.items.map((item, idx) => {
                   const eq = equipment.find(e => e.id === item.equipmentId);
                   return (
                     <li key={idx}>
@@ -164,7 +196,7 @@ export default function Shipping() {
               
               <div className="flex-row justify-between" style={{ fontSize: 'var(--font-size-sm)' }}>
                 <span>Budget Charge Value:</span>
-                <strong>${selectedShippingPo.totalAmount.toLocaleString()}</strong>
+                <strong>${selectedPo.totalAmount.toLocaleString()}</strong>
               </div>
             </div>
 
@@ -183,6 +215,49 @@ export default function Shipping() {
               </button>
             </div>
           </form>
+        )}
+      </Modal>
+
+      {/* DETAIL MODAL */}
+      <Modal isOpen={showDetailModal} onClose={() => setShowDetailModal(false)} title={`Shipping Bill Detail: SHP-${selectedBill?.id}`}>
+        {selectedBill && (
+          <div className="flex-col gap-md" style={{ fontSize: 'var(--font-size-sm)' }}>
+            <div className="box-card" style={{ backgroundColor: 'var(--card-bg-subtle)', border: '1px solid var(--border-light)' }}>
+              <div className="grid-cols-2 gap-md" style={{ display: 'grid', gridTemplateColumns: '150px 1fr', rowGap: '12px' }}>
+                <strong>Shipment Ref:</strong>
+                <span>SHP-{selectedBill.id}</span>
+
+                <strong>PO Reference:</strong>
+                <strong>{selectedBill.poNumber}</strong>
+
+                <strong>Date Shipped:</strong>
+                <span>{selectedBill.shippingDate}</span>
+
+                <strong>Registry Checksum:</strong>
+                <span style={{ fontFamily: 'monospace' }}>{selectedBill.checksum}</span>
+
+                <strong>Transport Status:</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontWeight: 700 }}><ShieldCheck size={16} /> ARRIVED / DELIVERED</div>
+              </div>
+            </div>
+
+            <div className="box-card">
+              <h4 style={{ margin: '0 0 10px 0' }}>Consigned Cargo Invoices:</h4>
+              <div className="flex-col gap-xs">
+                {selectedBill.items.map((item, idx) => {
+                  const eq = equipment.find(e => e.id === item.equipmentId);
+                  return (
+                    <div key={idx} className="flex-row justify-between align-center" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
+                      <span>• <strong>{eq ? eq.code : `#${item.equipmentId}`}</strong> - {eq ? eq.name : 'Unknown Equipment'}</span>
+                      <span>Dispatched Qty: x{item.quantity}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <button type="button" onClick={() => setShowDetailModal(false)} className="btn btn-secondary" style={{ alignSelf: 'flex-end' }}>Close Invoice</button>
+          </div>
         )}
       </Modal>
     </div>

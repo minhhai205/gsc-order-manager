@@ -1,17 +1,15 @@
 import React, { useState } from 'react';
-import { useAppData } from '../contexts/AppDataContext';
-import { useAuth, ROLES } from '../contexts/AuthContext';
-import Badge from '../components/ui/Badge';
+import { useAppData } from '../../contexts/AppDataContext';
+import { useAuth, ROLES } from '../../contexts/AuthContext';
+import Badge from '../../components/ui/Badge';
 import { Database, ShieldAlert, RotateCcw, Search, Terminal } from 'lucide-react';
 
-export default function Admin() {
+export default function SystemAdmin() {
   const { auditLogs, backups, triggerDatabaseBackup, triggerDatabaseRestore } = useAppData();
   const { currentUser } = useAuth();
-  const role = currentUser?.role;
 
-  const isAdmin = role === ROLES.SYSTEM_ADMIN;
+  const isAdmin = currentUser?.role === ROLES.SYSTEM_ADMIN;
 
-  // Search log query state
   const [searchQuery, setSearchQuery] = useState('');
 
   const onBackup = () => {
@@ -27,11 +25,11 @@ export default function Admin() {
   if (!isAdmin) {
     return (
       <div className="flex-col align-center justify-center" style={{ minHeight: '60vh', gap: '16px' }}>
-        <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '400px' }}>
+        <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '450px' }}>
           <ShieldAlert size={48} style={{ margin: '0 auto 12px auto' }} />
-          <h3>Access Restrict Security Flag!</h3>
+          <h3>Access Level Restrict</h3>
           <p style={{ fontSize: 'var(--font-size-sm)', margin: '8px 0 0 0', lineHeight: 1.5 }}>
-            This panel is protected by military-grade system logs encryption. You need <strong>System Admin</strong> access level credentials to unlock these utilities.
+            This page is strictly reserved for **System Administrators** to manage databases and search audit logs.
           </p>
         </div>
       </div>
@@ -41,14 +39,17 @@ export default function Admin() {
   return (
     <div>
       <div className="flex-row justify-between align-center" style={{ marginBottom: '24px' }}>
-        <h2>System Administration Utilities</h2>
+        <div>
+          <h2>System Administration Command (Admin Concern)</h2>
+          <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)' }}>Perform virtual database backups, recovery restorations, and audit logs analysis.</p>
+        </div>
         <button onClick={onBackup} className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Database size={16} />
           Create Database Backup
         </button>
       </div>
 
-      <div className="grid-cols-3" style={{ marginBottom: '32px' }}>
+      <div className="grid-cols-3 gap-lg" style={{ marginBottom: '32px' }}>
         {/* Backup files list */}
         <div className="box-card col-span-2">
           <h3>Simulated Database Backup & Restore Logs (UC11)</h3>

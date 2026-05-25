@@ -415,6 +415,95 @@ export function AppDataProvider({ children }) {
     addAuditLog('RESTORE', 'SystemSettings', `Database successfully restored from backup file ${backup.fileName}`);
   };
 
+  const handleUpdateAgency = (id, data) => {
+    setAgencies(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
+    addAuditLog('UPDATE', 'FederalAgency', `Updated agency profile details for ID: ${id}`);
+  };
+
+  const handleDeleteAgency = (id) => {
+    setAgencies(prev => prev.filter(a => a.id !== id));
+    addAuditLog('DELETE', 'FederalAgency', `Deleted agency profile for ID: ${id}`);
+  };
+
+  const handleUpdateContract = (id, data) => {
+    setContracts(prev => prev.map(c => c.id === id ? { 
+      ...c, 
+      code: data.code,
+      agencyId: parseInt(data.agencyId),
+      costLimit: parseFloat(data.costLimit),
+      endDate: data.endDate,
+      allowedEquipment: data.allowedEquipment.map(Number)
+    } : c));
+    addAuditLog('UPDATE', 'StandingContract', `Updated standing contract parameters for ID: ${id}`);
+  };
+
+  const handleDeleteContract = (id) => {
+    setContracts(prev => prev.filter(c => c.id !== id));
+    addAuditLog('DELETE', 'StandingContract', `Deleted standing contract registry for ID: ${id}`);
+  };
+
+  const handleCreateEquipment = (data) => {
+    const created = {
+      id: Date.now(),
+      code: data.code,
+      name: data.name,
+      price: parseFloat(data.price),
+      stock: parseInt(data.stock),
+      minStock: parseInt(data.minStock),
+      status: 'ACTIVE'
+    };
+    setEquipment(prev => [...prev, created]);
+    addAuditLog('CREATE', 'Equipment', `Created catalog equipment: ${created.code}`);
+    return created;
+  };
+
+  const handleUpdateEquipment = (id, data) => {
+    setEquipment(prev => prev.map(e => e.id === id ? { 
+      ...e, 
+      code: data.code,
+      name: data.name,
+      price: parseFloat(data.price), 
+      stock: parseInt(data.stock), 
+      minStock: parseInt(data.minStock) 
+    } : e));
+    addAuditLog('UPDATE', 'Equipment', `Updated equipment catalog specifications for ID: ${id}`);
+  };
+
+  const handleDeleteEquipment = (id) => {
+    setEquipment(prev => prev.filter(e => e.id !== id));
+    addAuditLog('DELETE', 'Equipment', `Deleted equipment catalog item for ID: ${id}`);
+  };
+
+  const handleUpdatePo = (id, data) => {
+    let totalAmount = 0;
+    const items = data.items.map(item => {
+      const eqId = parseInt(item.equipmentId);
+      const qty = parseInt(item.quantity);
+      const eq = equipment.find(e => e.id === eqId);
+      const price = eq ? eq.price : 0;
+      totalAmount += price * qty;
+      return { equipmentId: eqId, quantity: qty, price };
+    });
+
+    setPurchaseOrders(prev => prev.map(po => po.id === id ? { 
+      ...po, 
+      poNumber: data.poNumber, 
+      contractId: parseInt(data.contractId), 
+      issueDate: data.issueDate,
+      items,
+      totalAmount,
+      status: 'PENDING',
+      validationErrors: []
+    } : po));
+
+    addAuditLog('UPDATE', 'PurchaseOrder', `Updated and digitized purchase order details for ID: ${id}`);
+  };
+
+  const handleDeletePo = (id) => {
+    setPurchaseOrders(prev => prev.filter(po => po.id !== id));
+    addAuditLog('DELETE', 'PurchaseOrder', `Deleted purchase order digitization for ID: ${id}`);
+  };
+
   return (
     <AppDataContext.Provider value={{
       agencies, equipment, contracts, purchaseOrders, auditLogs,
@@ -423,7 +512,9 @@ export function AppDataProvider({ children }) {
       handleStockAdjustment, handleCreatePo, validatePurchaseOrder,
       generateRejectionLetter, handleSendRejectionLetter, handleInventoryCheck,
       handleConfirmExceptionReport, handleConfirmShipping, closeAndArchivePo,
-      triggerDatabaseBackup, triggerDatabaseRestore
+      triggerDatabaseBackup, triggerDatabaseRestore,
+      handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract,
+      handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo
     }}>
       {children}
     </AppDataContext.Provider>

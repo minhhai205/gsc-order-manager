@@ -4,11 +4,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AppDataProvider } from './contexts/AppDataContext';
 import Layout from './components/layout/Layout';
 import Overview from './pages/Overview';
-import AgenciesContracts from './pages/AgenciesContracts';
-import PurchaseOrders from './pages/PurchaseOrders';
-import Inventory from './pages/Inventory';
-import Shipping from './pages/Shipping';
-import Admin from './pages/Admin';
+import ManageAgencies from './pages/co/ManageAgencies';
+import ManageContracts from './pages/co/ManageContracts';
+import ManageOrders from './pages/co/ManageOrders';
+import AvailabilityChecks from './pages/fulfillment/AvailabilityChecks';
+import ShippingBills from './pages/fulfillment/ShippingBills';
+import StockAdjustment from './pages/warehouse/StockAdjustment';
+import SystemAdmin from './pages/admin/SystemAdmin';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import './App.css';
@@ -23,11 +25,13 @@ export default function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/" element={<Layout />}>
               <Route index element={<Overview />} />
-              <Route path="agencies" element={<AgenciesContracts />} />
-              <Route path="orders" element={<PurchaseOrders />} />
-              <Route path="inventory" element={<Inventory />} />
-              <Route path="shipping" element={<Shipping />} />
-              <Route path="admin" element={<Admin />} />
+              <Route path="co/agencies" element={<ManageAgencies />} />
+              <Route path="co/contracts" element={<ManageContracts />} />
+              <Route path="co/orders" element={<ManageOrders />} />
+              <Route path="fulfillment/checks" element={<AvailabilityChecks />} />
+              <Route path="fulfillment/shipping" element={<ShippingBills />} />
+              <Route path="warehouse/stock" style={{ overflow: 'hidden' }} element={<StockAdjustment />} />
+              <Route path="admin/utilities" element={<SystemAdmin />} />
             </Route>
           </Routes>
         </BrowserRouter>

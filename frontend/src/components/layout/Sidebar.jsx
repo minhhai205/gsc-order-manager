@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
-import { LayoutDashboard, Building2, FileText, Box, Truck, Settings } from 'lucide-react';
+import { LayoutDashboard, Building2, FileText, ClipboardCheck, Box, Truck, Settings } from 'lucide-react';
 
 export default function Sidebar() {
   const { currentUser } = useAuth();
@@ -11,8 +11,9 @@ export default function Sidebar() {
 
   const showAgencies = role === ROLES.SYSTEM_ADMIN || role === ROLES.CONTRACTING_OFFICER;
   const showOrders = role === ROLES.SYSTEM_ADMIN || role === ROLES.CONTRACTING_OFFICER;
-  const showInventory = role === ROLES.SYSTEM_ADMIN || role === ROLES.ORDER_FULFILLMENT_STAFF || role === ROLES.WAREHOUSE_STAFF;
+  const showChecks = role === ROLES.SYSTEM_ADMIN || role === ROLES.ORDER_FULFILLMENT_STAFF;
   const showShipping = role === ROLES.SYSTEM_ADMIN || role === ROLES.ORDER_FULFILLMENT_STAFF;
+  const showWarehouse = role === ROLES.SYSTEM_ADMIN || role === ROLES.WAREHOUSE_STAFF;
   const showAdmin = role === ROLES.SYSTEM_ADMIN;
 
   return (
@@ -27,7 +28,7 @@ export default function Sidebar() {
 
       {showAgencies && (
         <NavLink 
-          to="/agencies" 
+          to="/co/agencies" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         >
           <Building2 size={18} />
@@ -37,7 +38,7 @@ export default function Sidebar() {
 
       {showOrders && (
         <NavLink 
-          to="/orders" 
+          to="/co/orders" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         >
           <FileText size={18} />
@@ -45,19 +46,19 @@ export default function Sidebar() {
         </NavLink>
       )}
 
-      {showInventory && (
+      {showChecks && (
         <NavLink 
-          to="/inventory" 
+          to="/fulfillment/checks" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         >
-          <Box size={18} />
-          Inventory & Catalog
+          <ClipboardCheck size={18} />
+          Stock Allocations
         </NavLink>
       )}
 
       {showShipping && (
         <NavLink 
-          to="/shipping" 
+          to="/fulfillment/shipping" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         >
           <Truck size={18} />
@@ -65,10 +66,20 @@ export default function Sidebar() {
         </NavLink>
       )}
 
+      {showWarehouse && (
+        <NavLink 
+          to="/warehouse/stock" 
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+        >
+          <Box size={18} />
+          Catalog & Stock Adjust
+        </NavLink>
+      )}
+
       {/* Admin Utilities (Only visible to SYSTEM_ADMIN) */}
       {showAdmin && (
         <NavLink 
-          to="/admin" 
+          to="/admin/utilities" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
           style={{ borderTop: '1px solid var(--border-light)', marginTop: '8px', paddingTop: '16px' }}
         >
