@@ -3,7 +3,7 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck } from 'lucide-react';
+import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck, CheckCircle, AlertTriangle, X } from 'lucide-react';
 
 export default function ShippingBills() {
   const { purchaseOrders, shippingBills, equipment, handleConfirmShipping } = useAppData();
@@ -19,6 +19,16 @@ export default function ShippingBills() {
   const [selectedPo, setSelectedPo] = useState(null);
   const [selectedBill, setSelectedBill] = useState(null);
 
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   const openShippingForm = (po) => {
     setSelectedPo(po);
     setShowShippingModal(true);
@@ -29,9 +39,9 @@ export default function ShippingBills() {
     if (!selectedPo) return;
     const success = handleConfirmShipping(selectedPo);
     if (!success) {
-      alert("Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
+      triggerAlert('danger', "Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
     } else {
-      alert(`Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
+      triggerAlert('success', `Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
     }
     setShowShippingModal(false);
     setSelectedPo(null);
@@ -68,6 +78,25 @@ export default function ShippingBills() {
         </div>
       </div>
 
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="grid-cols-3 gap-lg" style={{ marginBottom: '32px' }}>
         {/* Shipped Bills Registry */}
         <div className="box-card col-span-2">
@@ -94,7 +123,7 @@ export default function ShippingBills() {
                 ) : (
                   shippingBills.map(bill => (
                     <tr key={bill.id}>
-                      <td><strong>SHP-{bill.id}</strong></td>
+                      <td><strong>{bill.shippingBillNumber || `SHP-${bill.id}`}</strong></td>
                       <td><strong>{bill.poNumber}</strong></td>
                       <td>{bill.shippingDate}</td>
                       <td>
@@ -225,7 +254,7 @@ export default function ShippingBills() {
             <div className="box-card" style={{ backgroundColor: 'var(--card-bg-subtle)', border: '1px solid var(--border-light)' }}>
               <div className="grid-cols-2 gap-md" style={{ display: 'grid', gridTemplateColumns: '150px 1fr', rowGap: '12px' }}>
                 <strong>Shipment Ref:</strong>
-                <span>SHP-{selectedBill.id}</span>
+                <span>{selectedBill.shippingBillNumber || `SHP-${selectedBill.id}`}</span>
 
                 <strong>PO Reference:</strong>
                 <strong>{selectedBill.poNumber}</strong>
@@ -233,11 +262,14 @@ export default function ShippingBills() {
                 <strong>Date Shipped:</strong>
                 <span>{selectedBill.shippingDate}</span>
 
-                <strong>Registry Checksum:</strong>
-                <span style={{ fontFamily: 'monospace' }}>{selectedBill.checksum}</span>
+                <strong>Destination Address:</strong>
+                <span>{selectedBill.destinationAddress}</span>
+
+                <strong>Created By:</strong>
+                <span>{selectedBill.createdBy}</span>
 
                 <strong>Transport Status:</strong>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontWeight: 700 }}><ShieldCheck size={16} /> ARRIVED / DELIVERED</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontWeight: 700 }}><ShieldCheck size={16} /> ARRIVED / {selectedBill.status}</div>
               </div>
             </div>
 

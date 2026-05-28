@@ -64,15 +64,6 @@ export default function Header() {
       </div>
 
       <div className="controls-group">
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme} 
-          className="theme-toggle-btn"
-          title="Toggle Light/Dark Contrast Theme"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
         {/* User profile & details customizer */}
         {currentUser && (
           <div className="flex-row align-center gap-md user-profile-header-group">
@@ -165,7 +156,7 @@ export default function Header() {
                     borderRadius: '8px',
                     padding: '10px',
                     cursor: 'pointer',
-                    background: isActive ? 'var(--color-primary-light)' : 'rgba(255,255,255,0.02)',
+                    background: isActive ? 'var(--color-primary-light)' : 'rgba(10,17,40,0.02)',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -175,7 +166,7 @@ export default function Header() {
                     transition: 'all 0.2s'
                   }}
                 >
-                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: preset.color, border: '1px solid #fff' }}></div>
+                  <div style={{ width: '16px', height: '16px', borderRadius: '50%', backgroundColor: preset.color, border: '1px solid var(--border-medium)' }}></div>
                   <strong style={{ fontSize: '11px', color: 'var(--text-primary)' }}>{preset.name}</strong>
                   <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{preset.label}</span>
                 </div>
@@ -184,7 +175,7 @@ export default function Header() {
           </div>
 
           <div className="form-section-title" style={{ marginTop: '8px' }}>Logistics Alerts Notifications</div>
-          <div className="flex-col gap-sm" style={{ border: '1px solid var(--border-light)', borderRadius: 'var(--border-radius-sm)', padding: '12px', background: 'rgba(255,255,255,0.01)' }}>
+          <div className="flex-col gap-sm" style={{ border: '1px solid var(--border-light)', borderRadius: 'var(--border-radius-sm)', padding: '12px', background: 'rgba(10,17,40,0.01)' }}>
             <label className="flex-row align-center gap-sm cursor-pointer" style={{ textTransform: 'none', fontSize: 'var(--font-size-sm)', color: 'var(--text-primary)' }}>
               <input 
                 type="checkbox" 

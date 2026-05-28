@@ -3,7 +3,7 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Plus, Edit2, Trash2, Eye, ShieldAlert, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, ShieldAlert, RefreshCw, AlertTriangle, CheckCircle, X } from 'lucide-react';
 
 export default function StockAdjustment() {
   const { 
@@ -24,9 +24,19 @@ export default function StockAdjustment() {
   // Active records state
   const [selectedEq, setSelectedEq] = useState(null);
 
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   // Forms state
   const [adjustData, setAdjustData] = useState({ equipmentId: '', quantity: '', operation: 'INCREASE', note: '' });
-  const [formData, setFormData] = useState({ code: '', name: '', price: '', stock: '', minStock: '' });
+  const [formData, setFormData] = useState({ code: '', name: '', price: '', stock: '', minStock: '', manufacturer: '', hardwareConfig: '' });
 
   const openAdjust = (eq) => {
     setAdjustData({ equipmentId: eq.id.toString(), quantity: '', operation: 'INCREASE', note: '' });
@@ -35,7 +45,7 @@ export default function StockAdjustment() {
   };
 
   const openCreate = () => {
-    setFormData({ code: '', name: '', price: '', stock: '', minStock: '' });
+    setFormData({ code: '', name: '', price: '', stock: '', minStock: '', manufacturer: '', hardwareConfig: '' });
     setShowCreateModal(true);
   };
 
@@ -46,7 +56,9 @@ export default function StockAdjustment() {
       name: eq.name,
       price: eq.price.toString(),
       stock: eq.stock.toString(),
-      minStock: eq.minStock.toString()
+      minStock: eq.minStock.toString(),
+      manufacturer: eq.manufacturer || '',
+      hardwareConfig: eq.hardwareConfig || ''
     });
     setShowEditModal(true);
   };
@@ -66,26 +78,54 @@ export default function StockAdjustment() {
     if (!adjustData.equipmentId || !adjustData.quantity) return;
     handleStockAdjustment(adjustData);
     setShowAdjustModal(false);
+    const eqName = equipment.find(eq => eq.id.toString() === adjustData.equipmentId)?.code || 'item';
+    triggerAlert('success', `Stock adjusted successfully for ${eqName} (${adjustData.operation === 'INCREASE' ? '+' : '-'}${adjustData.quantity}).`);
   };
 
   const onCreateSubmit = (e) => {
     e.preventDefault();
-    if (!formData.code || !formData.name || !formData.price || !formData.stock) return;
+    if (!formData.code || !formData.name || !formData.price || !formData.stock || !formData.manufacturer || !formData.hardwareConfig) {
+      triggerAlert('danger', 'Error: All creation fields are required.');
+      return;
+    }
+    // Enforce unique item code
+    const isDuplicate = equipment.some(eq => eq.code.toUpperCase() === formData.code.toUpperCase());
+    if (isDuplicate) {
+      triggerAlert('danger', `Error: Equipment item code ${formData.code} already exists.`);
+      return;
+    }
+    const unitPrice = parseFloat(formData.price);
+    if (isNaN(unitPrice) || unitPrice <= 0) {
+      triggerAlert('danger', 'Error: Unit Price must be a positive number greater than zero.');
+      return;
+    }
     handleCreateEquipment(formData);
     setShowCreateModal(false);
+    triggerAlert('success', `Equipment ${formData.code} added to catalog successfully!`);
   };
 
   const onEditSubmit = (e) => {
     e.preventDefault();
-    if (!selectedEq || !formData.code || !formData.name) return;
+    if (!selectedEq || !formData.code || !formData.name || !formData.price || !formData.manufacturer || !formData.hardwareConfig) {
+      triggerAlert('danger', 'Error: All updating fields are required.');
+      return;
+    }
+    const unitPrice = parseFloat(formData.price);
+    if (isNaN(unitPrice) || unitPrice <= 0) {
+      triggerAlert('danger', 'Error: Unit Price must be a positive number greater than zero.');
+      return;
+    }
     handleUpdateEquipment(selectedEq.id, formData);
     setShowEditModal(false);
+    triggerAlert('success', `Equipment ${formData.code} specifications updated successfully.`);
   };
 
   const onDeleteConfirm = () => {
     if (!selectedEq) return;
+    const code = selectedEq.code;
     handleDeleteEquipment(selectedEq.id);
     setShowDeleteConfirm(false);
+    triggerAlert('success', `Equipment ${code} was purged from catalog.`);
   };
 
   if (!isWarehouse) {
@@ -115,6 +155,25 @@ export default function StockAdjustment() {
         </button>
       </div>
 
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="box-card" style={{ marginBottom: '32px' }}>
         <div className="table-container">
           <table className="premium-table">
@@ -134,7 +193,10 @@ export default function StockAdjustment() {
                 return (
                   <tr key={eq.id}>
                     <td><strong>{eq.code}</strong></td>
-                    <td className="text-wrap"><strong>{eq.name}</strong></td>
+                    <td className="text-wrap">
+                      <div style={{ fontWeight: 600 }}>{eq.name}</div>
+                      {eq.manufacturer && <small style={{ color: 'var(--text-muted)', display: 'block' }}>Mfr: {eq.manufacturer}</small>}
+                    </td>
                     <td>${eq.price.toLocaleString()}</td>
                     <td style={{ color: isLow ? 'var(--color-danger)' : 'inherit', fontWeight: isLow ? 700 : 'inherit' }}>
                       <div className="flex-row align-center gap-xs">
@@ -184,21 +246,23 @@ export default function StockAdjustment() {
               <tr>
                 <th>Report Ref</th>
                 <th>PO Number</th>
-                <th>Date Generated</th>
+                <th>Reported At</th>
+                <th>Reported By</th>
                 <th>Deficit Items Log</th>
               </tr>
             </thead>
             <tbody>
               {exceptionReports.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No shortage logs recorded. Inventory levels healthy.</td>
+                  <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No shortage logs recorded. Inventory levels healthy.</td>
                 </tr>
               ) : (
                 exceptionReports.map(rep => (
                   <tr key={rep.id}>
-                    <td><strong>EXP-{rep.id}</strong></td>
+                    <td><strong>{rep.reportNumber || `EXP-${rep.id}`}</strong></td>
                     <td><strong>{rep.poNumber}</strong></td>
-                    <td>{rep.date}</td>
+                    <td>{rep.reportedAt || rep.date}</td>
+                    <td>{rep.reportedBy || 'SYSTEM'}</td>
                     <td>
                       <div className="flex-col gap-xs">
                         {rep.shortages.map((s, idx) => (
@@ -250,6 +314,7 @@ export default function StockAdjustment() {
               placeholder="e.g. Received cargo container, damaged inventory deduction" 
               value={adjustData.note} 
               onChange={(e) => setAdjustData({...adjustData, note: e.target.value})} 
+              required
             />
           </div>
           <div className="flex-row justify-end gap-sm" style={{ marginTop: '12px' }}>
@@ -277,9 +342,31 @@ export default function StockAdjustment() {
               <label>Equipment Name</label>
               <input 
                 type="text" 
-                placeholder="Specifications name" 
+                placeholder="e.g. Satellite Encryption receiver" 
                 value={formData.name} 
                 onChange={(e) => setFormData({...formData, name: e.target.value})} 
+                required 
+              />
+            </div>
+          </div>
+          <div className="grid-cols-2">
+            <div className="flex-col gap-xs">
+              <label>Manufacturer</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Raytheon Systems" 
+                value={formData.manufacturer} 
+                onChange={(e) => setFormData({...formData, manufacturer: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="flex-col gap-xs">
+              <label>Hardware Configuration Details</label>
+              <input 
+                type="text" 
+                placeholder="e.g. AES-256 core decryption engine" 
+                value={formData.hardwareConfig} 
+                onChange={(e) => setFormData({...formData, hardwareConfig: e.target.value})} 
                 required 
               />
             </div>
@@ -290,6 +377,7 @@ export default function StockAdjustment() {
               <input 
                 type="number" 
                 placeholder="Price value" 
+                min="1"
                 value={formData.price} 
                 onChange={(e) => setFormData({...formData, price: e.target.value})} 
                 required 
@@ -300,6 +388,7 @@ export default function StockAdjustment() {
               <input 
                 type="number" 
                 placeholder="Stock quantity" 
+                min="0"
                 value={formData.stock} 
                 onChange={(e) => setFormData({...formData, stock: e.target.value})} 
                 required 
@@ -310,6 +399,7 @@ export default function StockAdjustment() {
               <input 
                 type="number" 
                 placeholder="Min cap value" 
+                min="1"
                 value={formData.minStock} 
                 onChange={(e) => setFormData({...formData, minStock: e.target.value})} 
                 required 
@@ -328,12 +418,12 @@ export default function StockAdjustment() {
         <form onSubmit={onEditSubmit} className="flex-col gap-md">
           <div className="grid-cols-2">
             <div className="flex-col gap-xs">
-              <label>Equipment Code</label>
+              <label>Equipment Code (Locked)</label>
               <input 
                 type="text" 
                 value={formData.code} 
-                onChange={(e) => setFormData({...formData, code: e.target.value})} 
-                required 
+                disabled 
+                style={{ opacity: 0.6 }} 
               />
             </div>
             <div className="flex-col gap-xs">
@@ -346,11 +436,32 @@ export default function StockAdjustment() {
               />
             </div>
           </div>
+          <div className="grid-cols-2">
+            <div className="flex-col gap-xs">
+              <label>Manufacturer</label>
+              <input 
+                type="text" 
+                value={formData.manufacturer} 
+                onChange={(e) => setFormData({...formData, manufacturer: e.target.value})} 
+                required 
+              />
+            </div>
+            <div className="flex-col gap-xs">
+              <label>Hardware Configuration Details</label>
+              <input 
+                type="text" 
+                value={formData.hardwareConfig} 
+                onChange={(e) => setFormData({...formData, hardwareConfig: e.target.value})} 
+                required 
+              />
+            </div>
+          </div>
           <div className="grid-cols-3">
             <div className="flex-col gap-xs">
               <label>Unit Price ($)</label>
               <input 
                 type="number" 
+                min="1"
                 value={formData.price} 
                 onChange={(e) => setFormData({...formData, price: e.target.value})} 
                 required 
@@ -364,6 +475,7 @@ export default function StockAdjustment() {
               <label>Min Stock Threshold</label>
               <input 
                 type="number" 
+                min="1"
                 value={formData.minStock} 
                 onChange={(e) => setFormData({...formData, minStock: e.target.value})} 
                 required 
@@ -388,6 +500,12 @@ export default function StockAdjustment() {
 
                 <strong>Equipment Name:</strong>
                 <strong>{selectedEq.name}</strong>
+
+                <strong>Manufacturer:</strong>
+                <span>{selectedEq.manufacturer || 'N/A'}</span>
+
+                <strong>Hardware Config:</strong>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--font-size-xs)' }}>{selectedEq.hardwareConfig || 'N/A'}</span>
 
                 <strong>Unit Price:</strong>
                 <span>${selectedEq.price.toLocaleString()}</span>

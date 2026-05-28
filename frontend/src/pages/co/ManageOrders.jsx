@@ -6,7 +6,8 @@ import Badge from '../../components/ui/Badge';
 import { 
   Plus, Edit2, Trash2, Eye, ShieldAlert, Check, FileWarning, 
   Archive, Mail, PlusCircle, Trash, Truck, Calendar, MapPin, 
-  AlertTriangle, DollarSign, Info, ShieldCheck, Clock 
+  AlertTriangle, DollarSign, Info, ShieldCheck, Clock, Search,
+  CheckCircle, X
 } from 'lucide-react';
 
 export default function ManageOrders() {
@@ -33,16 +34,22 @@ export default function ManageOrders() {
   const [selectedPo, setSelectedPo] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
 
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   // Advanced Forms state
   const [formData, setFormData] = useState({ 
     poNumber: '', 
     contractId: '', 
     issueDate: '', 
-    priority: 'MEDIUM',
-    shippingAddress: '',
-    deliveryNotes: '',
-    officerRemarks: '',
-    carrier: 'GSC_CARGO',
+    validationReason: '',
     items: [{ equipmentId: '', quantity: '', customPrice: '' }] 
   });
 
@@ -51,11 +58,7 @@ export default function ManageOrders() {
       poNumber: '', 
       contractId: '', 
       issueDate: new Date().toISOString().slice(0, 10), 
-      priority: 'MEDIUM',
-      shippingAddress: '',
-      deliveryNotes: '',
-      officerRemarks: '',
-      carrier: 'GSC_CARGO',
+      validationReason: '',
       items: [{ equipmentId: '', quantity: '', customPrice: '' }] 
     });
     setShowCreateModal(true);
@@ -67,11 +70,7 @@ export default function ManageOrders() {
       poNumber: po.poNumber,
       contractId: po.contractId.toString(),
       issueDate: po.issueDate || '',
-      priority: po.priority || 'MEDIUM',
-      shippingAddress: po.shippingAddress || '',
-      deliveryNotes: po.deliveryNotes || '',
-      officerRemarks: po.officerRemarks || '',
-      carrier: po.carrier || 'GSC_CARGO',
+      validationReason: po.validationReason || '',
       items: po.items.map(item => ({
         equipmentId: item.equipmentId.toString(),
         quantity: item.quantity.toString(),
@@ -92,9 +91,11 @@ export default function ManageOrders() {
   };
 
   const handlePoItemChange = (index, field, value) => {
-    const updatedItems = [...formData.items];
-    updatedItems[index][field] = value;
-    setFormData(prev => ({ ...prev, items: updatedItems }));
+    setFormData(prev => {
+      const items = [...prev.items];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, items };
+    });
   };
 
   const addPoItemField = () => {
@@ -115,24 +116,31 @@ export default function ManageOrders() {
   const onCreateSubmit = (e) => {
     e.preventDefault();
     if (!formData.poNumber || !formData.contractId || formData.items.some(item => !item.equipmentId || !item.quantity)) {
-      alert("Error: Please verify all required items fields are completed!");
+      triggerAlert('danger', "Error: Please verify all required items fields are completed!");
       return;
     }
     handleCreatePo(formData);
     setShowCreateModal(false);
+    triggerAlert('success', `Purchase Order ${formData.poNumber} has been successfully digitized!`);
   };
 
   const onEditSubmit = (e) => {
     e.preventDefault();
-    if (!selectedPo || !formData.poNumber || !formData.contractId) return;
+    if (!selectedPo || !formData.poNumber || !formData.contractId) {
+      triggerAlert('danger', 'Error: All fields are required.');
+      return;
+    }
     handleUpdatePo(selectedPo.id, formData);
     setShowEditModal(false);
+    triggerAlert('success', `Purchase Order ${formData.poNumber} metadata updated successfully.`);
   };
 
   const onDeleteConfirm = () => {
     if (!selectedPo) return;
+    const poNumber = selectedPo.poNumber;
     handleDeletePo(selectedPo.id);
     setShowDeleteConfirm(false);
+    triggerAlert('success', `Purchase Order ${poNumber} has been successfully deleted.`);
   };
 
   const openRejectionLetter = (po) => {
@@ -149,6 +157,7 @@ export default function ManageOrders() {
   const onSendRejectionLetter = (id) => {
     handleSendRejectionLetter(id);
     setShowLetterModal(false);
+    triggerAlert('success', 'Official rejection letter has been issued and emailed to the agency.');
   };
 
   if (!isCo) {
@@ -186,6 +195,25 @@ export default function ManageOrders() {
         </button>
       </div>
 
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Spacious Search bar */}
       <div className="box-card" style={{ padding: '16px', marginBottom: '20px' }}>
         <div className="flex-row align-center search-bar-container" style={{ width: '100%' }}>
@@ -216,9 +244,8 @@ export default function ManageOrders() {
               <tr>
                 <th>PO Number</th>
                 <th>Standing Contract</th>
-                <th>Priority</th>
                 <th>Issue Date</th>
-                <th>Carrier / Shipped</th>
+                <th>Validation Reason</th>
                 <th>Value (Amount)</th>
                 <th>Compliance Status</th>
                 <th>Operation Actions</th>
@@ -247,23 +274,11 @@ export default function ManageOrders() {
                         <div style={{ fontWeight: 600 }}>{contract ? contract.code : 'N/A'}</div>
                         <small style={{ color: 'var(--text-muted)' }}>{agency ? agency.code : 'N/A'}</small>
                       </td>
-                      <td>
-                        <span className={`priority-tag priority-${(po.priority || 'MEDIUM').toLowerCase()}`}>
-                          {po.priority || 'MEDIUM'}
-                        </span>
-                      </td>
                       <td>{po.issueDate}</td>
                       <td>
-                        <div className="flex-col">
-                          <span style={{ fontWeight: 700, fontSize: '11px', color: 'var(--text-secondary)' }}>
-                            {po.carrier || 'GSC_CARGO'}
-                          </span>
-                          {po.trackingNumber && (
-                            <small style={{ fontFamily: 'monospace', color: 'var(--color-secondary)' }}>
-                              {po.trackingNumber}
-                            </small>
-                          )}
-                        </div>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                          {po.validationReason || 'N/A'}
+                        </span>
                       </td>
                       <td><strong>${po.totalAmount.toLocaleString()}</strong></td>
                       <td>
@@ -284,7 +299,10 @@ export default function ManageOrders() {
                           
                           {po.status === 'PENDING' ? (
                             <button
-                              onClick={() => validatePurchaseOrder(po.id)}
+                              onClick={() => {
+                                validatePurchaseOrder(po.id);
+                                triggerAlert('success', `Compliance check ran successfully for PO: ${po.poNumber}`);
+                              }}
                               className="btn btn-primary"
                               style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}
                             >
@@ -302,7 +320,10 @@ export default function ManageOrders() {
                             </button>
                           ) : po.status === 'SHIPPED' ? (
                             <button
-                              onClick={() => closeAndArchivePo(po.id)}
+                              onClick={() => {
+                                closeAndArchivePo(po.id);
+                                triggerAlert('success', `Purchase order ${po.poNumber} has been successfully closed and archived.`);
+                              }}
                               className="btn btn-success"
                               style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}
                             >
@@ -367,79 +388,16 @@ export default function ManageOrders() {
               </select>
             </div>
             <div className="flex-col gap-xxs">
-              <label>Priority Level</label>
-              <select 
-                value={formData.priority} 
-                onChange={(e) => setFormData({...formData, priority: e.target.value})} 
-                required
-              >
-                <option value="LOW">Low Priority</option>
-                <option value="MEDIUM">Medium Priority</option>
-                <option value="HIGH">High Priority</option>
-                <option value="CRITICAL">Critical Urgent</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid-cols-2">
-            <div className="flex-col gap-xxs">
-              <label>Issue Date</label>
-              <input 
-                type="date" 
-                value={formData.issueDate} 
-                onChange={(e) => setFormData({...formData, issueDate: e.target.value})} 
-                required
-              />
-            </div>
-            <div className="flex-col gap-xxs">
-              <label>Dispatch Shipping Carrier</label>
-              <select 
-                value={formData.carrier} 
-                onChange={(e) => setFormData({...formData, carrier: e.target.value})} 
-                required
-              >
-                <option value="GSC_CARGO">GSC Dedicated Cargo</option>
-                <option value="FEDEX">FedEx Express</option>
-                <option value="UPS">UPS Worldwide</option>
-                <option value="DHL">DHL Express</option>
-                <option value="USPS">USPS Priority Mail</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-section-title" style={{ marginTop: '8px' }}>Logistics Consignee & Shipping Details</div>
-          <div className="flex-col gap-xxs">
-            <label>Physical Shipping Delivery Address</label>
-            <input 
-              type="text" 
-              placeholder="Full shipping address..." 
-              value={formData.shippingAddress} 
-              onChange={(e) => setFormData({...formData, shippingAddress: e.target.value})} 
-              required
-            />
-          </div>
-          <div className="grid-cols-2">
-            <div className="flex-col gap-xxs">
-              <label>Special Delivery Instructions</label>
+              <label>Validation Reason (Optional)</label>
               <textarea 
-                placeholder="Gate codes, contact representative names..." 
-                value={formData.deliveryNotes} 
-                onChange={(e) => setFormData({...formData, deliveryNotes: e.target.value})} 
-                style={{ height: '70px', resize: 'none' }}
-              />
-            </div>
-            <div className="flex-col gap-xxs">
-              <label>Officer Audit Remarks</label>
-              <textarea 
-                placeholder="Notes for compliance overrides or special approval references..." 
-                value={formData.officerRemarks} 
-                onChange={(e) => setFormData({...formData, officerRemarks: e.target.value})} 
-                style={{ height: '70px', resize: 'none' }}
+                placeholder="Validation reason or remarks..." 
+                value={formData.validationReason} 
+                onChange={(e) => setFormData({...formData, validationReason: e.target.value})} 
+                style={{ height: '38px', resize: 'none' }}
               />
             </div>
           </div>
 
-          <div className="form-section-title" style={{ marginTop: '8px' }}>Dynamic Order Line Items (Deep custom pricing overrides)</div>
           <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: 'var(--text-muted)' }}>
             Choose an item and specify quantities. Leave the Custom Price Override field blank to use default catalog pricing.
           </p>
@@ -537,76 +495,15 @@ export default function ManageOrders() {
               </select>
             </div>
             <div className="flex-col gap-xxs">
-              <label>Priority Level</label>
-              <select 
-                value={formData.priority} 
-                onChange={(e) => setFormData({...formData, priority: e.target.value})} 
-                required
-              >
-                <option value="LOW">Low Priority</option>
-                <option value="MEDIUM">Medium Priority</option>
-                <option value="HIGH">High Priority</option>
-                <option value="CRITICAL">Critical Urgent</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid-cols-2">
-            <div className="flex-col gap-xxs">
-              <label>Issue Date</label>
-              <input 
-                type="date" 
-                value={formData.issueDate} 
-                onChange={(e) => setFormData({...formData, issueDate: e.target.value})} 
-                required
-              />
-            </div>
-            <div className="flex-col gap-xxs">
-              <label>Dispatch Carrier</label>
-              <select 
-                value={formData.carrier} 
-                onChange={(e) => setFormData({...formData, carrier: e.target.value})} 
-                required
-              >
-                <option value="GSC_CARGO">GSC Dedicated Cargo</option>
-                <option value="FEDEX">FedEx Express</option>
-                <option value="UPS">UPS Worldwide</option>
-                <option value="DHL">DHL Express</option>
-                <option value="USPS">USPS Priority Mail</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-section-title" style={{ marginTop: '8px' }}>Logistics Consignee & Shipping Details</div>
-          <div className="flex-col gap-xxs">
-            <label>Physical Shipping Delivery Address</label>
-            <input 
-              type="text" 
-              value={formData.shippingAddress} 
-              onChange={(e) => setFormData({...formData, shippingAddress: e.target.value})} 
-              required
-            />
-          </div>
-          <div className="grid-cols-2">
-            <div className="flex-col gap-xxs">
-              <label>Special Delivery Instructions</label>
+              <label>Validation Reason</label>
               <textarea 
-                value={formData.deliveryNotes} 
-                onChange={(e) => setFormData({...formData, deliveryNotes: e.target.value})} 
-                style={{ height: '70px', resize: 'none' }}
-              />
-            </div>
-            <div className="flex-col gap-xxs">
-              <label>Officer Audit Remarks</label>
-              <textarea 
-                value={formData.officerRemarks} 
-                onChange={(e) => setFormData({...formData, officerRemarks: e.target.value})} 
-                style={{ height: '70px', resize: 'none' }}
+                value={formData.validationReason} 
+                onChange={(e) => setFormData({...formData, validationReason: e.target.value})} 
+                style={{ height: '38px', resize: 'none' }}
               />
             </div>
           </div>
 
-          <div className="form-section-title" style={{ marginTop: '8px' }}>Dynamic Order Line Items</div>
           <div className="flex-col gap-sm" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-light)', padding: '12px', borderRadius: 'var(--border-radius-sm)' }}>
             {formData.items.map((item, idx) => (
               <div key={idx} className="flex-row gap-sm align-center">
@@ -688,27 +585,8 @@ export default function ManageOrders() {
               {/* Left Column: Consignee & Shipping */}
               <div className="box-card" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
                 <h4 style={{ margin: 0, color: 'var(--color-primary)', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px' }}>
-                  Shipping & Dispatch Consignee
+                  Purchase Order Specifications
                 </h4>
-                
-                <div className="flex-row align-start gap-sm">
-                  <MapPin size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0, marginTop: '2px' }} />
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Consignee Address:</strong>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>{selectedPo.shippingAddress}</span>
-                  </div>
-                </div>
-
-                <div className="flex-row align-start gap-sm">
-                  <Truck size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0, marginTop: '2px' }} />
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Shipping Carrier / Dispatch:</strong>
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>
-                      {selectedPo.carrier || 'GSC_CARGO'} 
-                      {selectedPo.trackingNumber ? ` (Tracking: ${selectedPo.trackingNumber})` : ' (Pending Shipment Allocation)'}
-                    </span>
-                  </div>
-                </div>
 
                 <div className="flex-row align-start gap-sm">
                   <Calendar size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0 }} />
@@ -719,18 +597,18 @@ export default function ManageOrders() {
                 </div>
 
                 <div className="flex-row align-start gap-sm">
-                  <Info size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0 }} />
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Special delivery notes:</strong>
-                    <span style={{ fontStyle: 'italic', fontSize: '12px' }}>{selectedPo.deliveryNotes || 'None'}</span>
-                  </div>
-                </div>
-
-                <div className="flex-row align-start gap-sm">
                   <ShieldCheck size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0 }} />
                   <div>
-                    <strong style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Officer Remarks:</strong>
-                    <span>{selectedPo.officerRemarks || 'None'}</span>
+                    <strong style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Validation Reason:</strong>
+                    <span>{selectedPo.validationReason || 'None'}</span>
+                  </div>
+                </div>
+                
+                <div className="flex-row align-start gap-sm">
+                  <Archive size={18} style={{ color: 'var(--color-secondary)', flexShrink: 0 }} />
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase' }}>Archive Code:</strong>
+                    <span>{selectedPo.archiveCode || 'N/A'}</span>
                   </div>
                 </div>
               </div>
@@ -845,7 +723,7 @@ export default function ManageOrders() {
           <div className="flex-col gap-md">
             <div className="box-card" style={{ backgroundColor: 'var(--card-bg)', border: '1px dashed var(--border-light)' }}>
               <div className="flex-row justify-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>GSC-CO-REJLETTER-DRAFT</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedLetter.letterNumber || 'REJ-DRAFT'}</span>
                 <span style={{ fontSize: '11px', fontWeight: 600 }}>Date: {selectedLetter.issueDate}</span>
               </div>
               <p style={{ fontSize: 'var(--font-size-sm)' }}>
@@ -866,7 +744,7 @@ export default function ManageOrders() {
               <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '12px 0' }} />
               <div className="flex-row justify-between align-center" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
                 <span>Signed: Contracting Officer (Authorized)</span>
-                <span>SHA256 CHECKSUM: {selectedLetter.checksum}</span>
+                <span>Created By: {selectedLetter.createdBy}</span>
               </div>
             </div>
 

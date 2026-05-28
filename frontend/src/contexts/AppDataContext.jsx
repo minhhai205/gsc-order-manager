@@ -1,19 +1,19 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 const AppDataContext = createContext();
 
 const initialAgencies = [
-  { id: 1, code: 'FBI-GSC', name: 'Federal Bureau of Investigation (FBI)', address: '935 Pennsylvania Avenue NW, Washington, D.C.', contact: 'Agent John Miller', phone: '202-324-3000', email: 'j.miller@fbi.gov', status: 'ACTIVE' },
-  { id: 2, code: 'NASA-GSC', name: 'National Aeronautics and Space Administration', address: '300 E Street SW, Washington, D.C.', contact: 'Dr. Sarah Connor', phone: '202-358-0000', email: 's.connor@nasa.gov', status: 'ACTIVE' },
-  { id: 3, code: 'DHS-GSC', name: 'Department of Homeland Security', address: '2707 Martin Luther King Jr Ave SE, Washington, D.C.', contact: 'Director Carl Jenkins', phone: '202-282-8000', email: 'c.jenkins@dhs.gov', status: 'ACTIVE' }
+  { id: 1, code: 'FBI-GSC', name: 'Federal Bureau of Investigation (FBI)', address: '935 Pennsylvania Avenue NW, Washington, D.C.', contact: 'Agent John Miller', phone: '202-324-3000', email: 'j.miller@fbi.gov', status: 'ACTIVE', jobTitle: 'Contracting Officer' },
+  { id: 2, code: 'NASA-GSC', name: 'National Aeronautics and Space Administration', address: '300 E Street SW, Washington, D.C.', contact: 'Dr. Sarah Connor', phone: '202-358-0000', email: 's.connor@nasa.gov', status: 'ACTIVE', jobTitle: 'Contracting Specialist' },
+  { id: 3, code: 'DHS-GSC', name: 'Department of Homeland Security', address: '2707 Martin Luther King Jr Ave SE, Washington, D.C.', contact: 'Director Carl Jenkins', phone: '202-282-8000', email: 'c.jenkins@dhs.gov', status: 'ACTIVE', jobTitle: 'Procurement Chief' }
 ];
 
 const initialEquipment = [
-  { id: 1, code: 'EQ-TAC-01', name: 'Tactical Mobile Communication Hub', price: 12500, stock: 15, minStock: 5, status: 'ACTIVE' },
-  { id: 2, code: 'EQ-SVR-02', name: 'Rugged Server Rack Alpha', price: 24000, stock: 8, minStock: 3, status: 'ACTIVE' },
-  { id: 3, code: 'EQ-THM-03', name: 'Thermal Imaging Scanner', price: 4800, stock: 22, minStock: 10, status: 'ACTIVE' },
-  { id: 4, code: 'EQ-SAT-04', name: 'Encrypted Satellite Receiver', price: 8500, stock: 4, minStock: 5, status: 'ACTIVE' }
+  { id: 1, code: 'EQ-TAC-01', name: 'Tactical Mobile Communication Hub', manufacturer: 'GSC Systems', hardwareConfig: 'Intel Xeon 16-Core, 64GB RAM, LTE-A Encrypted Transceiver', price: 12500, stock: 15, minStock: 5, status: 'ACTIVE' },
+  { id: 2, code: 'EQ-SVR-02', name: 'Rugged Server Rack Alpha', manufacturer: 'AlphaTech', hardwareConfig: 'Dual AMD EPYC, 256GB RAM, 10TB NVMe RAID-5', price: 24000, stock: 8, minStock: 3, status: 'ACTIVE' },
+  { id: 3, code: 'EQ-THM-03', name: 'Thermal Imaging Scanner', manufacturer: 'Raytheon', hardwareConfig: 'FLIR High-Res Thermal Core, MIL-SPEC Chassis', price: 4800, stock: 22, minStock: 10, status: 'ACTIVE' },
+  { id: 4, code: 'EQ-SAT-04', name: 'Encrypted Satellite Receiver', manufacturer: 'Lockheed', hardwareConfig: 'Ka-Band SATCOM Modem, AES-256 Decryption Engine', price: 8500, stock: 4, minStock: 5, status: 'ACTIVE' }
 ];
 
 const initialContracts = [
@@ -23,6 +23,7 @@ const initialContracts = [
     code: 'GSC-FBI-2026', 
     costLimit: 500000, 
     spent: 185000, 
+    startDate: '2026-01-01',
     endDate: '2027-12-31', 
     allowedEquipment: [1, 2, 3], 
     status: 'VALID' 
@@ -33,6 +34,7 @@ const initialContracts = [
     code: 'GSC-NASA-2026', 
     costLimit: 1200000, 
     spent: 420000, 
+    startDate: '2026-03-15',
     endDate: '2028-06-30', 
     allowedEquipment: [2, 4], 
     status: 'VALID' 
@@ -45,12 +47,8 @@ const initialPurchaseOrders = [
     poNumber: 'PO-FBI-889', 
     contractId: 1, 
     issueDate: '2026-05-20', 
-    priority: 'HIGH',
-    shippingAddress: '935 Pennsylvania Avenue NW, Washington, D.C.',
-    deliveryNotes: 'Deliver directly to the secure tactical operations center (TOC) on B3. Contact Agent Miller on arrival.',
-    officerRemarks: 'PO validated and approved for communication systems upgrades.',
-    trackingNumber: 'GSC-TRK-7Y2K8B',
-    carrier: 'GSC_CARGO',
+    validationReason: 'PO validated and approved for communication systems upgrades.',
+    archiveCode: '',
     status: 'SHIPPED', 
     items: [
       { equipmentId: 1, quantity: 4, catalogPrice: 12500, price: 12500 },
@@ -70,12 +68,8 @@ const initialPurchaseOrders = [
     poNumber: 'PO-NASA-102', 
     contractId: 2, 
     issueDate: '2026-05-22', 
-    priority: 'CRITICAL',
-    shippingAddress: '300 E Street SW, Washington, D.C.',
-    deliveryNotes: 'Urgent spacecraft simulation rack upgrades.',
-    officerRemarks: 'Special approval for customized price points granted by CO.',
-    trackingNumber: '',
-    carrier: 'FEDEX',
+    validationReason: 'Special approval for customized price points granted by CO.',
+    archiveCode: '',
     status: 'PENDING', 
     items: [
       { equipmentId: 2, quantity: 3, catalogPrice: 24000, price: 23500 }, // customized price override
@@ -97,17 +91,62 @@ const initialAuditLogs = [
 ];
 
 export function AppDataProvider({ children }) {
-  const { currentUser } = useAuth();
+  const { currentUser, authToken } = useAuth();
 
   const [agencies, setAgencies] = useState(initialAgencies);
   const [equipment, setEquipment] = useState(initialEquipment);
   const [contracts, setContracts] = useState(initialContracts);
   const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
-  const [auditLogs, setAuditLogs] = useState(initialAuditLogs);
+  const [auditLogs, setAuditLogs] = useState(() => {
+    const saved = localStorage.getItem('gsc-audit-logs');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse audit logs from localStorage', e);
+      }
+    }
+    return initialAuditLogs;
+  });
   const [exceptionReports, setExceptionReports] = useState([]);
   const [shippingBills, setShippingBills] = useState([]);
   const [rejectionLetters, setRejectionLetters] = useState([]);
   const [backups, setBackups] = useState([]);
+
+  // Fetch audit logs from backend database
+  useEffect(() => {
+    if (authToken) {
+      fetch('/api/audit-logs', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch audit logs');
+        return res.json();
+      })
+      .then(body => {
+        if (body && body.data) {
+          const mappedLogs = body.data.map(log => ({
+            id: log.id,
+            timestamp: new Date(log.occurredAt).toISOString().slice(0, 19).replace('T', ' '),
+            action: log.action,
+            entity: log.entityName,
+            details: log.detail,
+            user: log.actorName
+          }));
+          setAuditLogs(mappedLogs);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load audit logs from database', err);
+      });
+    }
+  }, [authToken]);
+
+  useEffect(() => {
+    localStorage.setItem('gsc-audit-logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
 
   const addAuditLog = (action, entity, details) => {
     const newLog = {
@@ -119,6 +158,24 @@ export function AppDataProvider({ children }) {
       user: currentUser ? currentUser.name : 'SYSTEM'
     };
     setAuditLogs(prev => [newLog, ...prev]);
+
+    if (authToken) {
+      fetch('/api/audit-logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          action,
+          entityName: entity,
+          detail: details
+        })
+      })
+      .catch(err => {
+        console.error('Failed to sync new audit log with backend', err);
+      });
+    }
   };
 
   const handleCreateAgency = (agencyData) => {
@@ -150,6 +207,7 @@ export function AppDataProvider({ children }) {
       code: contractData.code,
       costLimit: parseFloat(contractData.costLimit),
       spent: 0,
+      startDate: contractData.startDate || new Date().toISOString().slice(0, 10),
       endDate: contractData.endDate || '2027-12-31',
       allowedEquipment: contractData.allowedEquipment.map(id => parseInt(id)),
       status: 'VALID'
@@ -204,12 +262,8 @@ export function AppDataProvider({ children }) {
       poNumber: poData.poNumber,
       contractId,
       issueDate: poData.issueDate || new Date().toISOString().slice(0, 10),
-      priority: poData.priority || 'MEDIUM',
-      shippingAddress: poData.shippingAddress || '1600 Pennsylvania Ave NW, Washington, D.C.',
-      deliveryNotes: poData.deliveryNotes || '',
-      officerRemarks: poData.officerRemarks || '',
-      trackingNumber: '',
-      carrier: poData.carrier || 'GSC_CARGO',
+      validationReason: poData.validationReason || '',
+      archiveCode: '',
       status: 'PENDING',
       items,
       totalAmount,
@@ -257,11 +311,8 @@ export function AppDataProvider({ children }) {
           poNumber: data.poNumber, 
           contractId: parseInt(data.contractId), 
           issueDate: data.issueDate,
-          priority: data.priority || po.priority,
-          shippingAddress: data.shippingAddress || po.shippingAddress,
-          deliveryNotes: data.deliveryNotes || po.deliveryNotes,
-          officerRemarks: data.officerRemarks || po.officerRemarks,
-          carrier: data.carrier || po.carrier,
+          validationReason: data.validationReason || po.validationReason,
+          archiveCode: po.archiveCode,
           items,
           totalAmount,
           status: 'PENDING',
@@ -340,19 +391,19 @@ export function AppDataProvider({ children }) {
     const contract = contracts.find(c => c.id === po.contractId);
     const agency = contract ? agencies.find(a => a.id === contract.agencyId) : null;
 
-    const newLetter = {
-      id: letterId,
+    const letter = {
+      id: Date.now(),
+      letterNumber: 'REJ-' + po.poNumber + '-' + Date.now().toString().slice(-4),
       poId: po.id,
       poNumber: po.poNumber,
       agencyName: agency ? agency.name : 'Unknown Agency',
-      agencyEmail: agency ? agency.email : 'contact@agency.gov',
-      reasons: po.validationErrors,
+      agencyEmail: agency ? agency.contactEmail : 'unknown@agency.gov',
       issueDate: new Date().toISOString().slice(0, 10),
-      status: 'DRAFT',
-      checksum: 'SHA256:' + Math.random().toString(36).substring(2, 10).toUpperCase()
-    };
-
-    // Update status history
+      reason: po.validationReason || 'Non-compliance violations detected.',
+      reasons: po.validationErrors || [],
+      createdBy: currentUser ? currentUser.name : 'SYSTEM',
+      status: 'DRAFT'
+    };// Update status history
     setPurchaseOrders(prev => prev.map(o => {
       if (o.id === po.id) {
         const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -455,11 +506,13 @@ export function AppDataProvider({ children }) {
   const handleConfirmExceptionReport = (po, shortages) => {
     const report = {
       id: Date.now(),
+      reportNumber: 'EXP-' + Date.now().toString().slice(-6),
       poId: po.id,
       poNumber: po.poNumber,
-      date: new Date().toISOString().slice(0, 10),
+      reportedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      reportedBy: currentUser ? currentUser.name : 'SYSTEM',
+      note: 'Critical warehouse shortage. Stock allocation failed.',
       shortages,
-      checksum: 'SHA256-REP:' + Math.random().toString(36).substring(2, 10).toUpperCase()
     };
 
     setExceptionReports(prev => [report, ...prev]);
@@ -512,14 +565,20 @@ export function AppDataProvider({ children }) {
     const trackingNumber = 'GSC-TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     const billId = Date.now();
 
+    const contract = contracts.find(c => c.id === po.contractId);
+    const agency = contract ? agencies.find(a => a.id === contract.agencyId) : null;
+    const destinationAddress = agency ? agency.address : 'Unknown Address';
+
     const bill = {
       id: billId,
+      shippingBillNumber: 'SHP-' + billId,
       poId: po.id,
       poNumber: po.poNumber,
       shippingDate: new Date().toISOString().slice(0, 10),
       items: po.items,
       status: 'DELIVERED',
-      checksum: 'SHA256-SHIP:' + Math.random().toString(36).substring(2, 10).toUpperCase()
+      destinationAddress,
+      createdBy: currentUser ? currentUser.name : 'SYSTEM'
     };
 
     setShippingBills(prev => [bill, ...prev]);
@@ -531,10 +590,9 @@ export function AppDataProvider({ children }) {
         return { 
           ...o, 
           status: 'SHIPPED', 
-          trackingNumber,
           statusHistory: [
             ...o.statusHistory,
-            { timestamp, action: 'SHIPPED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Secure Shipping Bill SHP-${billId} issued. Stock deducted, tracking code: ${trackingNumber}.` }
+            { timestamp, action: 'SHIPPED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Secure Shipping Bill SHP-${billId} issued. Stock deducted.` }
           ]
         };
       }
@@ -619,6 +677,7 @@ export function AppDataProvider({ children }) {
       code: data.code,
       agencyId: parseInt(data.agencyId),
       costLimit: parseFloat(data.costLimit),
+      startDate: data.startDate,
       endDate: data.endDate,
       allowedEquipment: data.allowedEquipment.map(Number)
     } : c));
@@ -630,11 +689,24 @@ export function AppDataProvider({ children }) {
     addAuditLog('DELETE', 'StandingContract', `Deleted standing contract registry for ID: ${id}`);
   };
 
+  const toggleContractStatus = (id) => {
+    setContracts(prev => prev.map(c => {
+      if (c.id === id) {
+        const nextStatus = c.status === 'VALID' ? 'DISABLED' : 'VALID';
+        addAuditLog(nextStatus === 'VALID' ? 'ENABLE' : 'DISABLE', 'StandingContract', `Status updated to ${nextStatus} for contract ${c.code}`);
+        return { ...c, status: nextStatus };
+      }
+      return c;
+    }));
+  };
+
   const handleCreateEquipment = (data) => {
     const created = {
       id: Date.now(),
       code: data.code,
       name: data.name,
+      manufacturer: data.manufacturer || 'General GSC Vendor',
+      hardwareConfig: data.hardwareConfig || 'Standard Configuration',
       price: parseFloat(data.price),
       stock: parseInt(data.stock),
       minStock: parseInt(data.minStock),
@@ -650,6 +722,8 @@ export function AppDataProvider({ children }) {
       ...e, 
       code: data.code,
       name: data.name,
+      manufacturer: data.manufacturer || e.manufacturer || 'General GSC Vendor',
+      hardwareConfig: data.hardwareConfig || e.hardwareConfig || 'Standard Configuration',
       price: parseFloat(data.price), 
       stock: parseInt(data.stock), 
       minStock: parseInt(data.minStock) 
@@ -676,8 +750,9 @@ export function AppDataProvider({ children }) {
       generateRejectionLetter, handleSendRejectionLetter, handleInventoryCheck,
       handleConfirmExceptionReport, handleConfirmShipping, closeAndArchivePo,
       triggerDatabaseBackup, triggerDatabaseRestore,
-      handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract,
-      handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo
+      handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract, toggleContractStatus,
+      handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo,
+      addAuditLog
     }}>
       {children}
     </AppDataContext.Provider>

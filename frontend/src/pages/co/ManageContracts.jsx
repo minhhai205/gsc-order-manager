@@ -3,12 +3,12 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Plus, Edit2, Trash2, Eye, ShieldAlert, Award } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, ShieldAlert, Award, CheckCircle, AlertTriangle, X } from 'lucide-react';
 
 export default function ManageContracts() {
   const { 
     contracts, agencies, equipment, 
-    handleCreateContract, handleUpdateContract, handleDeleteContract 
+    handleCreateContract, handleUpdateContract, handleDeleteContract, toggleContractStatus
   } = useAppData();
   const { currentUser } = useAuth();
 
@@ -23,11 +23,21 @@ export default function ManageContracts() {
   // Active records state
   const [selectedContract, setSelectedContract] = useState(null);
 
+  // System alert notifications
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   // Forms state
-  const [formData, setFormData] = useState({ agencyId: '', code: '', costLimit: '', endDate: '', allowedEquipment: [] });
+  const [formData, setFormData] = useState({ agencyId: '', code: '', costLimit: '', startDate: '', endDate: '', allowedEquipment: [] });
 
   const openCreate = () => {
-    setFormData({ agencyId: '', code: '', costLimit: '', endDate: '', allowedEquipment: [] });
+    setFormData({ agencyId: '', code: '', costLimit: '', startDate: new Date().toISOString().slice(0, 10), endDate: '', allowedEquipment: [] });
     setShowCreateModal(true);
   };
 
@@ -37,6 +47,7 @@ export default function ManageContracts() {
       agencyId: contract.agencyId.toString(),
       code: contract.code,
       costLimit: contract.costLimit.toString(),
+      startDate: contract.startDate || '',
       endDate: contract.endDate || '',
       allowedEquipment: [...contract.allowedEquipment]
     });
@@ -55,22 +66,42 @@ export default function ManageContracts() {
 
   const onCreateSubmit = (e) => {
     e.preventDefault();
-    if (!formData.agencyId || !formData.code || !formData.costLimit) return;
+    if (!formData.agencyId || !formData.code || !formData.costLimit) {
+      triggerAlert('danger', 'Error: All creation fields are required.');
+      return;
+    }
+    const budget = parseFloat(formData.costLimit);
+    if (isNaN(budget) || budget <= 0) {
+      triggerAlert('danger', 'Error: Budget Cap must be a positive number greater than zero.');
+      return;
+    }
     handleCreateContract(formData);
     setShowCreateModal(false);
+    triggerAlert('success', `Standing Contract ${formData.code} was issued successfully!`);
   };
 
   const onEditSubmit = (e) => {
     e.preventDefault();
-    if (!selectedContract || !formData.code || !formData.costLimit) return;
+    if (!selectedContract || !formData.costLimit) {
+      triggerAlert('danger', 'Error: Cost Limit is required.');
+      return;
+    }
+    const budget = parseFloat(formData.costLimit);
+    if (isNaN(budget) || budget <= 0) {
+      triggerAlert('danger', 'Error: Budget Cap must be a positive number greater than zero.');
+      return;
+    }
     handleUpdateContract(selectedContract.id, formData);
     setShowEditModal(false);
+    triggerAlert('success', `Standing Contract ${formData.code} was successfully updated.`);
   };
 
   const onDeleteConfirm = () => {
     if (!selectedContract) return;
+    const code = selectedContract.code;
     handleDeleteContract(selectedContract.id);
     setShowDeleteConfirm(false);
+    triggerAlert('success', `Standing Contract ${code} has been annulled and deleted.`);
   };
 
   const toggleEquipmentInWhitelist = (eqId, isEdit = false) => {
@@ -110,6 +141,25 @@ export default function ManageContracts() {
         </button>
       </div>
 
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="box-card">
         <div className="table-container">
           <table className="premium-table">
@@ -119,7 +169,7 @@ export default function ManageContracts() {
                 <th>Federal Agency</th>
                 <th>Cost Limit</th>
                 <th>Spent Value Progress</th>
-                <th>Expiration Date</th>
+                <th>Contract Period</th>
                 <th>Whitelisted Items</th>
                 <th>Operation Actions</th>
               </tr>
@@ -159,12 +209,16 @@ export default function ManageContracts() {
                         </div>
                       </td>
                       <td style={{ color: isExpired ? 'var(--color-danger)' : 'inherit', fontWeight: isExpired ? 700 : 'inherit' }}>
-                        {c.endDate} {isExpired && '⚠️'}
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.startDate} to</div>
+                        <div>{c.endDate} {isExpired && '⚠️'}</div>
                       </td>
                       <td>
-                        <span className="badge badge-info" style={{ fontSize: '10px' }}>
-                          {c.allowedEquipment.length} Catalog Items
-                        </span>
+                        <div className="flex-row gap-xs align-center">
+                          <Badge status={c.status} />
+                          <span className="badge badge-info" style={{ fontSize: '10px' }}>
+                            {c.allowedEquipment.length} Items
+                          </span>
+                        </div>
                       </td>
                       <td>
                         <div className="flex-row gap-xs align-center">
@@ -173,6 +227,16 @@ export default function ManageContracts() {
                           </button>
                           <button onClick={() => openEdit(c)} className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }} title="Modify Specifications">
                             <Edit2 size={14} style={{ color: 'var(--color-primary)' }} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toggleContractStatus(c.id);
+                              triggerAlert('success', `Contract ${c.code} status toggled successfully.`);
+                            }} 
+                            className={`btn ${c.status === 'VALID' ? 'btn-secondary' : 'btn-primary'}`} 
+                            style={{ padding: '4px 8px', fontSize: '11px' }}
+                          >
+                            {c.status === 'VALID' ? 'Disable' : 'Enable'}
                           </button>
                           <button onClick={() => openDelete(c)} className="btn btn-danger" style={{ padding: '6px', borderRadius: '6px' }} title="Delete Contract">
                             <Trash2 size={14} />
@@ -221,20 +285,31 @@ export default function ManageContracts() {
               <label>Cost Limit Budget ($)</label>
               <input 
                 type="number" 
-                placeholder="Budget cap limit" 
+                placeholder="e.g. 500000" 
+                min="1"
                 value={formData.costLimit} 
                 onChange={(e) => setFormData({...formData, costLimit: e.target.value})} 
                 required 
               />
             </div>
             <div className="flex-col gap-xs">
-              <label>Expiration Date</label>
+              <label>Start Date</label>
               <input 
                 type="date" 
-                value={formData.endDate} 
-                onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+                value={formData.startDate} 
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})} 
+                required
               />
             </div>
+          </div>
+          <div className="flex-col gap-xs">
+            <label>Expiration Date</label>
+            <input 
+              type="date" 
+              value={formData.endDate} 
+              onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+              required
+            />
           </div>
 
           <div className="flex-col gap-xs">
@@ -273,12 +348,12 @@ export default function ManageContracts() {
               </select>
             </div>
             <div className="flex-col gap-xs">
-              <label>Contract Code</label>
+              <label>Contract Code (Locked)</label>
               <input 
                 type="text" 
                 value={formData.code} 
-                onChange={(e) => setFormData({...formData, code: e.target.value})} 
-                required 
+                disabled 
+                style={{ opacity: 0.6 }} 
               />
             </div>
           </div>
@@ -287,19 +362,30 @@ export default function ManageContracts() {
               <label>Cost Limit Budget ($)</label>
               <input 
                 type="number" 
+                min="1"
                 value={formData.costLimit} 
                 onChange={(e) => setFormData({...formData, costLimit: e.target.value})} 
                 required 
               />
             </div>
             <div className="flex-col gap-xs">
-              <label>Expiration Date</label>
+              <label>Start Date</label>
               <input 
                 type="date" 
-                value={formData.endDate} 
-                onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+                value={formData.startDate} 
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})} 
+                required
               />
             </div>
+          </div>
+          <div className="flex-col gap-xs">
+            <label>Expiration Date</label>
+            <input 
+              type="date" 
+              value={formData.endDate} 
+              onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+              required
+            />
           </div>
 
           <div className="flex-col gap-xs">
@@ -342,6 +428,9 @@ export default function ManageContracts() {
 
                 <strong>Executed Spent:</strong>
                 <span>${selectedContract.spent.toLocaleString()} ({((selectedContract.spent / selectedContract.costLimit) * 100).toFixed(1)}% usage)</span>
+
+                <strong>Start Date:</strong>
+                <span>{selectedContract.startDate}</span>
 
                 <strong>Expiry Date:</strong>
                 <span>{selectedContract.endDate}</span>

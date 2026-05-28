@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
-import { LayoutDashboard, Building2, FileText, ClipboardCheck, Box, Truck, Settings } from 'lucide-react';
+import { LayoutDashboard, Building2, FileText, ClipboardCheck, Box, Truck, Settings, Briefcase } from 'lucide-react';
 
 export default function Sidebar() {
   const { currentUser } = useAuth();
@@ -27,13 +27,22 @@ export default function Sidebar() {
       </NavLink>
 
       {showAgencies && (
-        <NavLink 
-          to="/co/agencies" 
-          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
-        >
-          <Building2 size={18} />
-          Agencies & Contracts
-        </NavLink>
+        <>
+          <NavLink 
+            to="/co/agencies" 
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Building2 size={18} />
+            Federal Agencies
+          </NavLink>
+          <NavLink 
+            to="/co/contracts" 
+            className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          >
+            <Briefcase size={18} />
+            Standing Contracts
+          </NavLink>
+        </>
       )}
 
       {showOrders && (
