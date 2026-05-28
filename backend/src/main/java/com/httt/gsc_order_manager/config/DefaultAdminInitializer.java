@@ -39,17 +39,23 @@ public class DefaultAdminInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        if (userAccountRepository.existsByEmailIgnoreCase(adminEmail)) {
+        seedUser(adminEmail, adminPassword, adminFullName, adminDepartment, Role.SYSTEM_ADMIN);
+        seedUser("officer@gsc.local", "123", "Agent John Miller (CO)", "Contracting Office", Role.CONTRACTING_OFFICER);
+        seedUser("fulfillment@gsc.local", "123", "Sarah Connor (Fulfillment)", "Logistics", Role.ORDER_FULFILLMENT_STAFF);
+        seedUser("warehouse@gsc.local", "123", "Carl Jenkins (Warehouse)", "Warehouse", Role.WAREHOUSE_STAFF);
+    }
+
+    private void seedUser(String email, String password, String fullName, String department, Role role) {
+        if (userAccountRepository.existsByEmailIgnoreCase(email)) {
             return;
         }
-
-        UserAccount admin = new UserAccount();
-        admin.setFullName(adminFullName);
-        admin.setEmail(adminEmail);
-        admin.setPasswordHash(passwordEncoder.encode(adminPassword));
-        admin.setDepartment(adminDepartment);
-        admin.setRole(Role.SYSTEM_ADMIN);
-        admin.setStatus(UserStatus.ACTIVE);
-        userAccountRepository.save(admin);
+        UserAccount user = new UserAccount();
+        user.setFullName(fullName);
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setDepartment(department);
+        user.setRole(role);
+        user.setStatus(UserStatus.ACTIVE);
+        userAccountRepository.save(user);
     }
 }

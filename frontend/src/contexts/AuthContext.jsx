@@ -29,6 +29,39 @@ export function AuthProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  const [authToken, setAuthToken] = useState(() => localStorage.getItem('gsc-auth-token') || '');
+
+  useEffect(() => {
+    if (currentUser) {
+      const email = currentUser.username === 'admin' ? 'admin@gsc.local' : `${currentUser.username}@gsc.local`;
+      const password = currentUser.username === 'admin' ? 'Admin@123' : '123';
+
+      fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Auth failed');
+        return res.json();
+      })
+      .then(data => {
+        if (data && data.accessToken) {
+          setAuthToken(data.accessToken);
+          localStorage.setItem('gsc-auth-token', data.accessToken);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to sync auth with backend', err);
+      });
+    } else {
+      setAuthToken('');
+      localStorage.removeItem('gsc-auth-token');
+    }
+  }, [currentUser]);
+
   // Apply stored seasonal themes class dynamically to body element
   useEffect(() => {
     if (currentUser && currentUser.themeClass) {
@@ -172,6 +205,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{ 
       currentUser, 
+      authToken,
       login, 
       register, 
       logout, 

@@ -151,6 +151,15 @@ html.light body {
   --scrollbar-track: #f1f5f9;
 }
 
+html.light .btn-secondary {
+  background: rgba(15, 23, 42, 0.06);
+  color: var(--text-primary);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+}
+html.light .btn-secondary:hover {
+  background: rgba(15, 23, 42, 0.12);
+}
+
 /* Light mode individual theme overrides to keep contrast high and theme colors beautiful */
 html.light body.tet {
   --bg-primary: #fff5f5; /* Warm soft rose */

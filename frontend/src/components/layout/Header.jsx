@@ -64,15 +64,6 @@ export default function Header() {
       </div>
 
       <div className="controls-group">
-        {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme} 
-          className="theme-toggle-btn"
-          title="Toggle Light/Dark Contrast Theme"
-        >
-          {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
-
         {/* User profile & details customizer */}
         {currentUser && (
           <div className="flex-row align-center gap-md user-profile-header-group">

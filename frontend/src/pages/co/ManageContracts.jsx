@@ -8,7 +8,7 @@ import { Plus, Edit2, Trash2, Eye, ShieldAlert, Award, CheckCircle, AlertTriangl
 export default function ManageContracts() {
   const { 
     contracts, agencies, equipment, 
-    handleCreateContract, handleUpdateContract, handleDeleteContract 
+    handleCreateContract, handleUpdateContract, handleDeleteContract, toggleContractStatus
   } = useAppData();
   const { currentUser } = useAuth();
 
@@ -211,9 +211,12 @@ export default function ManageContracts() {
                         {c.endDate} {isExpired && '⚠️'}
                       </td>
                       <td>
-                        <span className="badge badge-info" style={{ fontSize: '10px' }}>
-                          {c.allowedEquipment.length} Catalog Items
-                        </span>
+                        <div className="flex-row gap-xs align-center">
+                          <Badge status={c.status} />
+                          <span className="badge badge-info" style={{ fontSize: '10px' }}>
+                            {c.allowedEquipment.length} Items
+                          </span>
+                        </div>
                       </td>
                       <td>
                         <div className="flex-row gap-xs align-center">
@@ -222,6 +225,16 @@ export default function ManageContracts() {
                           </button>
                           <button onClick={() => openEdit(c)} className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }} title="Modify Specifications">
                             <Edit2 size={14} style={{ color: 'var(--color-primary)' }} />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              toggleContractStatus(c.id);
+                              triggerAlert('success', `Contract ${c.code} status toggled successfully.`);
+                            }} 
+                            className={`btn ${c.status === 'VALID' ? 'btn-secondary' : 'btn-primary'}`} 
+                            style={{ padding: '4px 8px', fontSize: '11px' }}
+                          >
+                            {c.status === 'VALID' ? 'Disable' : 'Enable'}
                           </button>
                           <button onClick={() => openDelete(c)} className="btn btn-danger" style={{ padding: '6px', borderRadius: '6px' }} title="Delete Contract">
                             <Trash2 size={14} />

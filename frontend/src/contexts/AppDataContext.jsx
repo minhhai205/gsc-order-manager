@@ -4,9 +4,9 @@ import { useAuth } from './AuthContext';
 const AppDataContext = createContext();
 
 const initialAgencies = [
-  { id: 1, code: 'FBI-GSC', name: 'Federal Bureau of Investigation (FBI)', address: '935 Pennsylvania Avenue NW, Washington, D.C.', contact: 'Agent John Miller', phone: '202-324-3000', email: 'j.miller@fbi.gov', status: 'ACTIVE' },
-  { id: 2, code: 'NASA-GSC', name: 'National Aeronautics and Space Administration', address: '300 E Street SW, Washington, D.C.', contact: 'Dr. Sarah Connor', phone: '202-358-0000', email: 's.connor@nasa.gov', status: 'ACTIVE' },
-  { id: 3, code: 'DHS-GSC', name: 'Department of Homeland Security', address: '2707 Martin Luther King Jr Ave SE, Washington, D.C.', contact: 'Director Carl Jenkins', phone: '202-282-8000', email: 'c.jenkins@dhs.gov', status: 'ACTIVE' }
+  { id: 1, code: 'FBI-GSC', name: 'Federal Bureau of Investigation (FBI)', address: '935 Pennsylvania Avenue NW, Washington, D.C.', contact: 'Agent John Miller', phone: '202-324-3000', email: 'j.miller@fbi.gov', status: 'ACTIVE', jobTitle: 'Contracting Officer' },
+  { id: 2, code: 'NASA-GSC', name: 'National Aeronautics and Space Administration', address: '300 E Street SW, Washington, D.C.', contact: 'Dr. Sarah Connor', phone: '202-358-0000', email: 's.connor@nasa.gov', status: 'ACTIVE', jobTitle: 'Contracting Specialist' },
+  { id: 3, code: 'DHS-GSC', name: 'Department of Homeland Security', address: '2707 Martin Luther King Jr Ave SE, Washington, D.C.', contact: 'Director Carl Jenkins', phone: '202-282-8000', email: 'c.jenkins@dhs.gov', status: 'ACTIVE', jobTitle: 'Procurement Chief' }
 ];
 
 const initialEquipment = [
@@ -97,7 +97,7 @@ const initialAuditLogs = [
 ];
 
 export function AppDataProvider({ children }) {
-  const { currentUser } = useAuth();
+  const { currentUser, authToken } = useAuth();
 
   const [agencies, setAgencies] = useState(initialAgencies);
   const [equipment, setEquipment] = useState(initialEquipment);
@@ -119,6 +119,37 @@ export function AppDataProvider({ children }) {
   const [rejectionLetters, setRejectionLetters] = useState([]);
   const [backups, setBackups] = useState([]);
 
+  // Fetch audit logs from backend database
+  useEffect(() => {
+    if (authToken) {
+      fetch('/api/audit-logs', {
+        headers: {
+          'Authorization': `Bearer ${authToken}`
+        }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch audit logs');
+        return res.json();
+      })
+      .then(body => {
+        if (body && body.data) {
+          const mappedLogs = body.data.map(log => ({
+            id: log.id,
+            timestamp: new Date(log.occurredAt).toISOString().slice(0, 19).replace('T', ' '),
+            action: log.action,
+            entity: log.entityName,
+            details: log.detail,
+            user: log.actorName
+          }));
+          setAuditLogs(mappedLogs);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load audit logs from database', err);
+      });
+    }
+  }, [authToken]);
+
   useEffect(() => {
     localStorage.setItem('gsc-audit-logs', JSON.stringify(auditLogs));
   }, [auditLogs]);
@@ -133,6 +164,24 @@ export function AppDataProvider({ children }) {
       user: currentUser ? currentUser.name : 'SYSTEM'
     };
     setAuditLogs(prev => [newLog, ...prev]);
+
+    if (authToken) {
+      fetch('/api/audit-logs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`
+        },
+        body: JSON.stringify({
+          action,
+          entityName: entity,
+          detail: details
+        })
+      })
+      .catch(err => {
+        console.error('Failed to sync new audit log with backend', err);
+      });
+    }
   };
 
   const handleCreateAgency = (agencyData) => {
@@ -644,6 +693,17 @@ export function AppDataProvider({ children }) {
     addAuditLog('DELETE', 'StandingContract', `Deleted standing contract registry for ID: ${id}`);
   };
 
+  const toggleContractStatus = (id) => {
+    setContracts(prev => prev.map(c => {
+      if (c.id === id) {
+        const nextStatus = c.status === 'VALID' ? 'DISABLED' : 'VALID';
+        addAuditLog(nextStatus === 'VALID' ? 'ENABLE' : 'DISABLE', 'StandingContract', `Status updated to ${nextStatus} for contract ${c.code}`);
+        return { ...c, status: nextStatus };
+      }
+      return c;
+    }));
+  };
+
   const handleCreateEquipment = (data) => {
     const created = {
       id: Date.now(),
@@ -694,7 +754,7 @@ export function AppDataProvider({ children }) {
       generateRejectionLetter, handleSendRejectionLetter, handleInventoryCheck,
       handleConfirmExceptionReport, handleConfirmShipping, closeAndArchivePo,
       triggerDatabaseBackup, triggerDatabaseRestore,
-      handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract,
+      handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract, toggleContractStatus,
       handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo,
       addAuditLog
     }}>
