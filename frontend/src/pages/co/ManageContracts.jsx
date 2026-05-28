@@ -34,10 +34,10 @@ export default function ManageContracts() {
   };
 
   // Forms state
-  const [formData, setFormData] = useState({ agencyId: '', code: '', costLimit: '', endDate: '', allowedEquipment: [] });
+  const [formData, setFormData] = useState({ agencyId: '', code: '', costLimit: '', startDate: '', endDate: '', allowedEquipment: [] });
 
   const openCreate = () => {
-    setFormData({ agencyId: '', code: '', costLimit: '', endDate: '', allowedEquipment: [] });
+    setFormData({ agencyId: '', code: '', costLimit: '', startDate: new Date().toISOString().slice(0, 10), endDate: '', allowedEquipment: [] });
     setShowCreateModal(true);
   };
 
@@ -47,6 +47,7 @@ export default function ManageContracts() {
       agencyId: contract.agencyId.toString(),
       code: contract.code,
       costLimit: contract.costLimit.toString(),
+      startDate: contract.startDate || '',
       endDate: contract.endDate || '',
       allowedEquipment: [...contract.allowedEquipment]
     });
@@ -168,7 +169,7 @@ export default function ManageContracts() {
                 <th>Federal Agency</th>
                 <th>Cost Limit</th>
                 <th>Spent Value Progress</th>
-                <th>Expiration Date</th>
+                <th>Contract Period</th>
                 <th>Whitelisted Items</th>
                 <th>Operation Actions</th>
               </tr>
@@ -208,7 +209,8 @@ export default function ManageContracts() {
                         </div>
                       </td>
                       <td style={{ color: isExpired ? 'var(--color-danger)' : 'inherit', fontWeight: isExpired ? 700 : 'inherit' }}>
-                        {c.endDate} {isExpired && '⚠️'}
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.startDate} to</div>
+                        <div>{c.endDate} {isExpired && '⚠️'}</div>
                       </td>
                       <td>
                         <div className="flex-row gap-xs align-center">
@@ -291,14 +293,23 @@ export default function ManageContracts() {
               />
             </div>
             <div className="flex-col gap-xs">
-              <label>Expiration Date</label>
+              <label>Start Date</label>
               <input 
                 type="date" 
-                value={formData.endDate} 
-                onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+                value={formData.startDate} 
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})} 
                 required
               />
             </div>
+          </div>
+          <div className="flex-col gap-xs">
+            <label>Expiration Date</label>
+            <input 
+              type="date" 
+              value={formData.endDate} 
+              onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+              required
+            />
           </div>
 
           <div className="flex-col gap-xs">
@@ -358,14 +369,23 @@ export default function ManageContracts() {
               />
             </div>
             <div className="flex-col gap-xs">
-              <label>Expiration Date</label>
+              <label>Start Date</label>
               <input 
                 type="date" 
-                value={formData.endDate} 
-                onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+                value={formData.startDate} 
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})} 
                 required
               />
             </div>
+          </div>
+          <div className="flex-col gap-xs">
+            <label>Expiration Date</label>
+            <input 
+              type="date" 
+              value={formData.endDate} 
+              onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+              required
+            />
           </div>
 
           <div className="flex-col gap-xs">
@@ -408,6 +428,9 @@ export default function ManageContracts() {
 
                 <strong>Executed Spent:</strong>
                 <span>${selectedContract.spent.toLocaleString()} ({((selectedContract.spent / selectedContract.costLimit) * 100).toFixed(1)}% usage)</span>
+
+                <strong>Start Date:</strong>
+                <span>{selectedContract.startDate}</span>
 
                 <strong>Expiry Date:</strong>
                 <span>{selectedContract.endDate}</span>

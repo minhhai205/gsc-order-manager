@@ -72,8 +72,8 @@ export default function AvailabilityChecks() {
     );
   }
 
-  // Validated orders waiting for stock checks
-  const pendingChecks = purchaseOrders.filter(po => po.status === 'OUTSTANDING');
+  // Validated orders waiting for stock checks (outstanding or previously checked with shortages)
+  const pendingChecks = purchaseOrders.filter(po => po.status === 'OUTSTANDING' || po.status === 'INVENTORY_CHECKED');
 
   return (
     <div>

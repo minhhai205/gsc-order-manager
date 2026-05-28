@@ -23,6 +23,7 @@ const initialContracts = [
     code: 'GSC-FBI-2026', 
     costLimit: 500000, 
     spent: 185000, 
+    startDate: '2026-01-01',
     endDate: '2027-12-31', 
     allowedEquipment: [1, 2, 3], 
     status: 'VALID' 
@@ -33,6 +34,7 @@ const initialContracts = [
     code: 'GSC-NASA-2026', 
     costLimit: 1200000, 
     spent: 420000, 
+    startDate: '2026-03-15',
     endDate: '2028-06-30', 
     allowedEquipment: [2, 4], 
     status: 'VALID' 
@@ -213,6 +215,7 @@ export function AppDataProvider({ children }) {
       code: contractData.code,
       costLimit: parseFloat(contractData.costLimit),
       spent: 0,
+      startDate: contractData.startDate || new Date().toISOString().slice(0, 10),
       endDate: contractData.endDate || '2027-12-31',
       allowedEquipment: contractData.allowedEquipment.map(id => parseInt(id)),
       status: 'VALID'
@@ -682,6 +685,7 @@ export function AppDataProvider({ children }) {
       code: data.code,
       agencyId: parseInt(data.agencyId),
       costLimit: parseFloat(data.costLimit),
+      startDate: data.startDate,
       endDate: data.endDate,
       allowedEquipment: data.allowedEquipment.map(Number)
     } : c));

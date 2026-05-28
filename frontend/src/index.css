@@ -128,102 +128,120 @@ body.winter {
    LIGHT MODE CONTRAST OVERRIDES (Beautiful, non-glare, non-grey)
    ═══════════════════════════════════════════════════════ */
 html.light body {
-  --bg-primary: #f0f3fa; /* Soft slate-tinted off-white (no glare) */
-  --bg-secondary: #e2e8f3; /* Richer slate background */
-  --text-primary: #0f172a; /* Deep navy-slate (high contrast) */
-  --text-secondary: #334155; /* Mid navy-slate */
-  --text-muted: #4f5e74; /* Tinted readable muted text (no pure grey) */
-  --card-bg: rgba(255, 255, 255, 0.85); /* Frosted premium glass card */
-  --border-light: rgba(15, 23, 42, 0.08);
-  --border-medium: rgba(15, 23, 42, 0.16);
-  --border-focus: #4f46e5;
-  --color-primary: #4f46e5;
-  --color-primary-light: rgba(79, 70, 229, 0.08);
+  --bg-primary: #cbd8f0; /* Soft slate-tinted periwinkle (no glare, distinctly colored) */
+  --bg-secondary: #b3c7e8; /* Richer slate background */
+  --text-primary: #0a1128; /* Deep navy-slate (high contrast) */
+  --text-secondary: #1e293b; /* Mid navy-slate */
+  --text-muted: #3b4e68; /* Tinted readable muted text (no pure grey) */
+  --card-bg: rgba(223, 232, 246, 0.95); /* Light periwinkle card background, distinctly colored, non-white */
+  --border-light: rgba(10, 17, 40, 0.15);
+  --border-medium: rgba(10, 17, 40, 0.25);
+  --border-focus: #3b82f6;
+  --color-primary: #2563eb;
+  --color-primary-light: rgba(37, 99, 235, 0.08);
   --color-secondary: #0284c7;
   --color-secondary-light: rgba(2, 132, 199, 0.08);
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.08);
-  --shadow-glow: 0 0 25px rgba(79, 70, 229, 0.15);
-  --glow-1: hsla(278, 65%, 85%, 0.18);
-  --glow-2: hsla(158, 55%, 90%, 0.18);
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-track: #f1f5f9;
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.16);
+  --shadow-glow: 0 0 25px rgba(37, 99, 235, 0.2);
+  --glow-1: hsla(220, 65%, 80%, 0.25);
+  --glow-2: hsla(200, 55%, 85%, 0.25);
+  --scrollbar-thumb: #94a3b8;
+  --scrollbar-track: #cbd8f0;
 }
 
 html.light .btn-secondary {
-  background: rgba(15, 23, 42, 0.06);
+  background: rgba(10, 17, 40, 0.06);
   color: var(--text-primary);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid rgba(10, 17, 40, 0.15);
 }
 html.light .btn-secondary:hover {
-  background: rgba(15, 23, 42, 0.12);
+  background: rgba(10, 17, 40, 0.12);
 }
 
 /* Light mode individual theme overrides to keep contrast high and theme colors beautiful */
 html.light body.tet {
-  --bg-primary: #fff5f5; /* Warm soft rose */
-  --bg-secondary: #ffebeb;
-  --card-bg: rgba(255, 255, 255, 0.88);
-  --text-primary: #7f1d1d; /* Deep crimson */
-  --text-secondary: #991b1b;
-  --text-muted: #b91c1c;
-  --border-light: rgba(239, 68, 68, 0.12);
-  --border-medium: rgba(239, 68, 68, 0.22);
+  --bg-primary: #fbcbcb; /* Beautiful rich pastel rose */
+  --bg-secondary: #f7a8a8; /* Deeper pastel rose */
+  --card-bg: #fde2e2; /* Beautiful rose-tinted cream, clearly pink, non-white */
+  --text-primary: #5c0f0f; /* Deep dark mahogany crimson */
+  --text-secondary: #7a1515;
+  --text-muted: #9c2727;
+  --border-light: rgba(92, 15, 15, 0.18);
+  --border-medium: rgba(92, 15, 15, 0.3);
   --color-primary: #ef4444;
   --color-secondary: #d97706;
 }
 
 html.light body.spring {
-  --bg-primary: #f2faf5; /* Soft mint */
-  --bg-secondary: #e6f6ed;
-  --card-bg: rgba(255, 255, 255, 0.88);
-  --text-primary: #064e3b; /* Deep forest green */
-  --text-secondary: #047857;
-  --text-muted: #059669;
-  --border-light: rgba(52, 211, 153, 0.12);
-  --border-medium: rgba(52, 211, 153, 0.22);
+  --bg-primary: #c2eed5; /* Beautiful pastel mint green */
+  --bg-secondary: #9fe2bd; /* Deeper mint green */
+  --card-bg: #dcf6e7; /* Soft light mint/sage, distinctly colored green-tint, non-white */
+  --text-primary: #042f1a; /* Deep forest dark green */
+  --text-secondary: #064e2d;
+  --text-muted: #0b7244;
+  --border-light: rgba(4, 47, 26, 0.18);
+  --border-medium: rgba(4, 47, 26, 0.3);
   --color-primary: #ec4899; /* Cherry Blossom Pink */
   --color-secondary: #10b981;
 }
 
 html.light body.summer {
-  --bg-primary: #f0f9ff; /* Soft cyan/sky */
-  --bg-secondary: #e0f2fe;
-  --card-bg: rgba(255, 255, 255, 0.88);
-  --text-primary: #0c4a6e; /* Deep azure */
-  --text-secondary: #0369a1;
-  --text-muted: #0284c7;
-  --border-light: rgba(6, 182, 212, 0.12);
-  --border-medium: rgba(6, 182, 212, 0.22);
+  --bg-primary: #bee5f7; /* Beautiful soft sky-blue/cyan */
+  --bg-secondary: #90d3f2;
+  --card-bg: #d5effb; /* Soft ice blue, distinctly blue and non-white */
+  --text-primary: #042e47; /* Deep ocean blue */
+  --text-secondary: #084c70;
+  --text-muted: #0a699c;
+  --border-light: rgba(4, 46, 71, 0.18);
+  --border-medium: rgba(4, 46, 71, 0.3);
   --color-primary: #06b6d4;
   --color-secondary: #d97706;
 }
 
 html.light body.autumn {
-  --bg-primary: #fdfaf4; /* Soft copper-beige */
-  --bg-secondary: #f7eedb;
-  --card-bg: rgba(255, 255, 255, 0.88);
-  --text-primary: #7c2d12; /* Deep rust orange */
-  --text-secondary: #9a3412;
-  --text-muted: #b45309;
-  --border-light: rgba(249, 115, 22, 0.12);
-  --border-medium: rgba(249, 115, 22, 0.22);
+  --bg-primary: #f5dfbe; /* Beautiful warm pastel tan/beige */
+  --bg-secondary: #ebce9d;
+  --card-bg: #faedd9; /* Soft golden-sand cream, rich tint, non-white */
+  --text-primary: #3d1703; /* Deep dark espresso/copper brown */
+  --text-secondary: #5c2509;
+  --text-muted: #853b0e;
+  --border-light: rgba(61, 23, 3, 0.18);
+  --border-medium: rgba(61, 23, 3, 0.3);
   --color-primary: #ea580c;
   --color-secondary: #d97706;
 }
 
 html.light body.winter {
-  --bg-primary: #f4f9fc; /* Glacier light */
-  --bg-secondary: #e5f0f6;
-  --card-bg: rgba(255, 255, 255, 0.88);
-  --text-primary: #0f365c; /* Glacier blue-black */
-  --text-secondary: #1b4d7c;
-  --text-muted: #2d6aa3;
-  --border-light: rgba(56, 189, 248, 0.12);
-  --border-medium: rgba(56, 189, 248, 0.22);
+  --bg-primary: #cce3f0; /* Beautiful icy slate pastel */
+  --bg-secondary: #adcfdf;
+  --card-bg: #e1eff6; /* Soft glacier blue, distinctly colored, non-white */
+  --text-primary: #051c33; /* Deep midnight navy */
+  --text-secondary: #0a3055;
+  --text-muted: #154c80;
+  --border-light: rgba(5, 28, 51, 0.18);
+  --border-medium: rgba(5, 28, 51, 0.3);
   --color-primary: #0284c7;
   --color-secondary: #10b981;
+}
+
+/* Light mode transparency and input overrides - strictly no pure white transparent glare */
+html.light input, html.light select, html.light textarea {
+  background-color: rgba(10, 17, 40, 0.04);
+  border: 1px solid rgba(10, 17, 40, 0.18);
+}
+html.light input:focus, html.light select:focus, html.light textarea:focus {
+  background-color: rgba(10, 17, 40, 0.08);
+}
+html.light .table-container {
+  background: rgba(10, 17, 40, 0.02);
+}
+html.light .premium-table th {
+  background: rgba(10, 17, 40, 0.05);
+}
+html.light .premium-table tbody tr:hover td {
+  background-color: rgba(10, 17, 40, 0.04);
 }
 
 /* Apply background canvas drifts */
