@@ -246,21 +246,23 @@ export default function StockAdjustment() {
               <tr>
                 <th>Report Ref</th>
                 <th>PO Number</th>
-                <th>Date Generated</th>
+                <th>Reported At</th>
+                <th>Reported By</th>
                 <th>Deficit Items Log</th>
               </tr>
             </thead>
             <tbody>
               {exceptionReports.length === 0 ? (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No shortage logs recorded. Inventory levels healthy.</td>
+                  <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No shortage logs recorded. Inventory levels healthy.</td>
                 </tr>
               ) : (
                 exceptionReports.map(rep => (
                   <tr key={rep.id}>
-                    <td><strong>EXP-{rep.id}</strong></td>
+                    <td><strong>{rep.reportNumber || `EXP-${rep.id}`}</strong></td>
                     <td><strong>{rep.poNumber}</strong></td>
-                    <td>{rep.date}</td>
+                    <td>{rep.reportedAt || rep.date}</td>
+                    <td>{rep.reportedBy || 'SYSTEM'}</td>
                     <td>
                       <div className="flex-col gap-xs">
                         {rep.shortages.map((s, idx) => (

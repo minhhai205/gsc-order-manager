@@ -47,12 +47,8 @@ const initialPurchaseOrders = [
     poNumber: 'PO-FBI-889', 
     contractId: 1, 
     issueDate: '2026-05-20', 
-    priority: 'HIGH',
-    shippingAddress: '935 Pennsylvania Avenue NW, Washington, D.C.',
-    deliveryNotes: 'Deliver directly to the secure tactical operations center (TOC) on B3. Contact Agent Miller on arrival.',
-    officerRemarks: 'PO validated and approved for communication systems upgrades.',
-    trackingNumber: 'GSC-TRK-7Y2K8B',
-    carrier: 'GSC_CARGO',
+    validationReason: 'PO validated and approved for communication systems upgrades.',
+    archiveCode: '',
     status: 'SHIPPED', 
     items: [
       { equipmentId: 1, quantity: 4, catalogPrice: 12500, price: 12500 },
@@ -72,12 +68,8 @@ const initialPurchaseOrders = [
     poNumber: 'PO-NASA-102', 
     contractId: 2, 
     issueDate: '2026-05-22', 
-    priority: 'CRITICAL',
-    shippingAddress: '300 E Street SW, Washington, D.C.',
-    deliveryNotes: 'Urgent spacecraft simulation rack upgrades.',
-    officerRemarks: 'Special approval for customized price points granted by CO.',
-    trackingNumber: '',
-    carrier: 'FEDEX',
+    validationReason: 'Special approval for customized price points granted by CO.',
+    archiveCode: '',
     status: 'PENDING', 
     items: [
       { equipmentId: 2, quantity: 3, catalogPrice: 24000, price: 23500 }, // customized price override
@@ -270,12 +262,8 @@ export function AppDataProvider({ children }) {
       poNumber: poData.poNumber,
       contractId,
       issueDate: poData.issueDate || new Date().toISOString().slice(0, 10),
-      priority: poData.priority || 'MEDIUM',
-      shippingAddress: poData.shippingAddress || '1600 Pennsylvania Ave NW, Washington, D.C.',
-      deliveryNotes: poData.deliveryNotes || '',
-      officerRemarks: poData.officerRemarks || '',
-      trackingNumber: '',
-      carrier: poData.carrier || 'GSC_CARGO',
+      validationReason: poData.validationReason || '',
+      archiveCode: '',
       status: 'PENDING',
       items,
       totalAmount,
@@ -323,11 +311,8 @@ export function AppDataProvider({ children }) {
           poNumber: data.poNumber, 
           contractId: parseInt(data.contractId), 
           issueDate: data.issueDate,
-          priority: data.priority || po.priority,
-          shippingAddress: data.shippingAddress || po.shippingAddress,
-          deliveryNotes: data.deliveryNotes || po.deliveryNotes,
-          officerRemarks: data.officerRemarks || po.officerRemarks,
-          carrier: data.carrier || po.carrier,
+          validationReason: data.validationReason || po.validationReason,
+          archiveCode: po.archiveCode,
           items,
           totalAmount,
           status: 'PENDING',
@@ -406,19 +391,19 @@ export function AppDataProvider({ children }) {
     const contract = contracts.find(c => c.id === po.contractId);
     const agency = contract ? agencies.find(a => a.id === contract.agencyId) : null;
 
-    const newLetter = {
-      id: letterId,
+    const letter = {
+      id: Date.now(),
+      letterNumber: 'REJ-' + po.poNumber + '-' + Date.now().toString().slice(-4),
       poId: po.id,
       poNumber: po.poNumber,
       agencyName: agency ? agency.name : 'Unknown Agency',
-      agencyEmail: agency ? agency.email : 'contact@agency.gov',
-      reasons: po.validationErrors,
+      agencyEmail: agency ? agency.contactEmail : 'unknown@agency.gov',
       issueDate: new Date().toISOString().slice(0, 10),
-      status: 'DRAFT',
-      checksum: 'SHA256:' + Math.random().toString(36).substring(2, 10).toUpperCase()
-    };
-
-    // Update status history
+      reason: po.validationReason || 'Non-compliance violations detected.',
+      reasons: po.validationErrors || [],
+      createdBy: currentUser ? currentUser.name : 'SYSTEM',
+      status: 'DRAFT'
+    };// Update status history
     setPurchaseOrders(prev => prev.map(o => {
       if (o.id === po.id) {
         const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
@@ -521,11 +506,13 @@ export function AppDataProvider({ children }) {
   const handleConfirmExceptionReport = (po, shortages) => {
     const report = {
       id: Date.now(),
+      reportNumber: 'EXP-' + Date.now().toString().slice(-6),
       poId: po.id,
       poNumber: po.poNumber,
-      date: new Date().toISOString().slice(0, 10),
+      reportedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      reportedBy: currentUser ? currentUser.name : 'SYSTEM',
+      note: 'Critical warehouse shortage. Stock allocation failed.',
       shortages,
-      checksum: 'SHA256-REP:' + Math.random().toString(36).substring(2, 10).toUpperCase()
     };
 
     setExceptionReports(prev => [report, ...prev]);
@@ -578,14 +565,20 @@ export function AppDataProvider({ children }) {
     const trackingNumber = 'GSC-TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
     const billId = Date.now();
 
+    const contract = contracts.find(c => c.id === po.contractId);
+    const agency = contract ? agencies.find(a => a.id === contract.agencyId) : null;
+    const destinationAddress = agency ? agency.address : 'Unknown Address';
+
     const bill = {
       id: billId,
+      shippingBillNumber: 'SHP-' + billId,
       poId: po.id,
       poNumber: po.poNumber,
       shippingDate: new Date().toISOString().slice(0, 10),
       items: po.items,
       status: 'DELIVERED',
-      checksum: 'SHA256-SHIP:' + Math.random().toString(36).substring(2, 10).toUpperCase()
+      destinationAddress,
+      createdBy: currentUser ? currentUser.name : 'SYSTEM'
     };
 
     setShippingBills(prev => [bill, ...prev]);
@@ -597,10 +590,9 @@ export function AppDataProvider({ children }) {
         return { 
           ...o, 
           status: 'SHIPPED', 
-          trackingNumber,
           statusHistory: [
             ...o.statusHistory,
-            { timestamp, action: 'SHIPPED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Secure Shipping Bill SHP-${billId} issued. Stock deducted, tracking code: ${trackingNumber}.` }
+            { timestamp, action: 'SHIPPED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Secure Shipping Bill SHP-${billId} issued. Stock deducted.` }
           ]
         };
       }

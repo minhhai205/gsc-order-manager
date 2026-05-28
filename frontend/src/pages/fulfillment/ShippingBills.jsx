@@ -123,7 +123,7 @@ export default function ShippingBills() {
                 ) : (
                   shippingBills.map(bill => (
                     <tr key={bill.id}>
-                      <td><strong>SHP-{bill.id}</strong></td>
+                      <td><strong>{bill.shippingBillNumber || `SHP-${bill.id}`}</strong></td>
                       <td><strong>{bill.poNumber}</strong></td>
                       <td>{bill.shippingDate}</td>
                       <td>
@@ -254,7 +254,7 @@ export default function ShippingBills() {
             <div className="box-card" style={{ backgroundColor: 'var(--card-bg-subtle)', border: '1px solid var(--border-light)' }}>
               <div className="grid-cols-2 gap-md" style={{ display: 'grid', gridTemplateColumns: '150px 1fr', rowGap: '12px' }}>
                 <strong>Shipment Ref:</strong>
-                <span>SHP-{selectedBill.id}</span>
+                <span>{selectedBill.shippingBillNumber || `SHP-${selectedBill.id}`}</span>
 
                 <strong>PO Reference:</strong>
                 <strong>{selectedBill.poNumber}</strong>
@@ -262,11 +262,14 @@ export default function ShippingBills() {
                 <strong>Date Shipped:</strong>
                 <span>{selectedBill.shippingDate}</span>
 
-                <strong>Registry Checksum:</strong>
-                <span style={{ fontFamily: 'monospace' }}>{selectedBill.checksum}</span>
+                <strong>Destination Address:</strong>
+                <span>{selectedBill.destinationAddress}</span>
+
+                <strong>Created By:</strong>
+                <span>{selectedBill.createdBy}</span>
 
                 <strong>Transport Status:</strong>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontWeight: 700 }}><ShieldCheck size={16} /> ARRIVED / DELIVERED</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontWeight: 700 }}><ShieldCheck size={16} /> ARRIVED / {selectedBill.status}</div>
               </div>
             </div>
 
