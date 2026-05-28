@@ -3,7 +3,7 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck } from 'lucide-react';
+import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck, CheckCircle, AlertTriangle, X } from 'lucide-react';
 
 export default function ShippingBills() {
   const { purchaseOrders, shippingBills, equipment, handleConfirmShipping } = useAppData();
@@ -19,6 +19,16 @@ export default function ShippingBills() {
   const [selectedPo, setSelectedPo] = useState(null);
   const [selectedBill, setSelectedBill] = useState(null);
 
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   const openShippingForm = (po) => {
     setSelectedPo(po);
     setShowShippingModal(true);
@@ -29,9 +39,9 @@ export default function ShippingBills() {
     if (!selectedPo) return;
     const success = handleConfirmShipping(selectedPo);
     if (!success) {
-      alert("Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
+      triggerAlert('danger', "Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
     } else {
-      alert(`Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
+      triggerAlert('success', `Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
     }
     setShowShippingModal(false);
     setSelectedPo(null);
@@ -67,6 +77,25 @@ export default function ShippingBills() {
           <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)' }}>Confirm cargo allocations, record contract expenses, and issue secure Cargo Shipping Bills.</p>
         </div>
       </div>
+
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       <div className="grid-cols-3 gap-lg" style={{ marginBottom: '32px' }}>
         {/* Shipped Bills Registry */}

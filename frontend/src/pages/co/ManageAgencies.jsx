@@ -3,7 +3,7 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Plus, Edit2, Trash2, Eye, ShieldAlert, Check, X } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, ShieldAlert, Check, X, CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function ManageAgencies() {
   const { agencies, handleCreateAgency, handleUpdateAgency, handleDeleteAgency, toggleAgencyStatus } = useAppData();
@@ -20,11 +20,21 @@ export default function ManageAgencies() {
   // Active records state
   const [selectedAgency, setSelectedAgency] = useState(null);
 
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   // Forms state
-  const [formData, setFormData] = useState({ code: '', name: '', address: '', contact: '', phone: '', email: '' });
+  const [formData, setFormData] = useState({ code: '', name: '', address: '', contact: '', phone: '', email: '', jobTitle: '' });
 
   const openCreate = () => {
-    setFormData({ code: '', name: '', address: '', contact: '', phone: '', email: '' });
+    setFormData({ code: '', name: '', address: '', contact: '', phone: '', email: '', jobTitle: '' });
     setShowCreateModal(true);
   };
 
@@ -36,7 +46,8 @@ export default function ManageAgencies() {
       address: agency.address || '',
       contact: agency.contact || '',
       phone: agency.phone || '',
-      email: agency.email || ''
+      email: agency.email || '',
+      jobTitle: agency.jobTitle || ''
     });
     setShowEditModal(true);
   };
@@ -53,22 +64,32 @@ export default function ManageAgencies() {
 
   const onCreateSubmit = (e) => {
     e.preventDefault();
-    if (!formData.code || !formData.name) return;
+    if (!formData.code || !formData.name || !formData.address || !formData.contact || !formData.phone || !formData.email || !formData.jobTitle) {
+      triggerAlert('danger', 'Error: All agency registration fields are required.');
+      return;
+    }
     handleCreateAgency(formData);
     setShowCreateModal(false);
+    triggerAlert('success', `Agency profile ${formData.code} has been successfully registered!`);
   };
 
   const onEditSubmit = (e) => {
     e.preventDefault();
-    if (!selectedAgency || !formData.name) return;
+    if (!selectedAgency || !formData.name || !formData.address || !formData.contact || !formData.phone || !formData.email || !formData.jobTitle) {
+      triggerAlert('danger', 'Error: All fields must be filled to update.');
+      return;
+    }
     handleUpdateAgency(selectedAgency.id, formData);
     setShowEditModal(false);
+    triggerAlert('success', `Agency profile ${formData.code} has been successfully updated.`);
   };
 
   const onDeleteConfirm = () => {
     if (!selectedAgency) return;
+    const code = selectedAgency.code;
     handleDeleteAgency(selectedAgency.id);
     setShowDeleteConfirm(false);
+    triggerAlert('success', `Agency profile ${code} was successfully destroyed.`);
   };
 
   if (!isCo) {
@@ -98,6 +119,25 @@ export default function ManageAgencies() {
         </button>
       </div>
 
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       <div className="box-card">
         <div className="table-container">
           <table className="premium-table">
@@ -119,7 +159,10 @@ export default function ManageAgencies() {
                     <div style={{ fontWeight: 600 }}>{a.name}</div>
                     <small style={{ color: 'var(--text-muted)' }}>{a.address}</small>
                   </td>
-                  <td>{a.contact}</td>
+                  <td>
+                    <div style={{ fontWeight: 600 }}>{a.contact}</div>
+                    {a.jobTitle && <small style={{ color: 'var(--text-muted)', display: 'block' }}>{a.jobTitle}</small>}
+                  </td>
                   <td>
                     <div>{a.email}</div>
                     <small style={{ color: 'var(--text-muted)' }}>{a.phone}</small>
@@ -134,7 +177,10 @@ export default function ManageAgencies() {
                         <Edit2 size={14} style={{ color: 'var(--color-primary)' }} />
                       </button>
                       <button 
-                        onClick={() => toggleAgencyStatus(a.id)} 
+                        onClick={() => {
+                          toggleAgencyStatus(a.id);
+                          triggerAlert('success', `Agency ${a.code} status toggled successfully.`);
+                        }} 
                         className={`btn ${a.status === 'ACTIVE' ? 'btn-secondary' : 'btn-primary'}`} 
                         style={{ padding: '4px 8px', fontSize: '11px' }}
                       >
@@ -184,34 +230,50 @@ export default function ManageAgencies() {
               placeholder="e.g. 935 Pennsylvania Avenue NW, D.C." 
               value={formData.address} 
               onChange={(e) => setFormData({...formData, address: e.target.value})} 
+              required
             />
           </div>
-          <div className="flex-col gap-xs">
-            <label>Corporate Contact Person Name</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Agent Miller" 
-              value={formData.contact} 
-              onChange={(e) => setFormData({...formData, contact: e.target.value})} 
-            />
+          <div className="grid-cols-2">
+            <div className="flex-col gap-xs">
+              <label>Corporate Contact Person Name</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Agent Miller" 
+                value={formData.contact} 
+                onChange={(e) => setFormData({...formData, contact: e.target.value})} 
+                required
+              />
+            </div>
+            <div className="flex-col gap-xs">
+              <label>Representative Position / Job Title</label>
+              <input 
+                type="text" 
+                placeholder="e.g. Contracting Officer" 
+                value={formData.jobTitle} 
+                onChange={(e) => setFormData({...formData, jobTitle: e.target.value})} 
+                required
+              />
+            </div>
           </div>
           <div className="grid-cols-2">
             <div className="flex-col gap-xs">
               <label>Phone Number</label>
               <input 
                 type="text" 
-                placeholder="Telecommunication link" 
+                placeholder="e.g. 202-324-3000" 
                 value={formData.phone} 
                 onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                required
               />
             </div>
             <div className="flex-col gap-xs">
               <label>Secure Corporate Email</label>
               <input 
                 type="email" 
-                placeholder="Security encryption email" 
+                placeholder="e.g. j.miller@fbi.gov" 
                 value={formData.email} 
                 onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                required
               />
             </div>
           </div>
@@ -246,15 +308,28 @@ export default function ManageAgencies() {
               type="text" 
               value={formData.address} 
               onChange={(e) => setFormData({...formData, address: e.target.value})} 
+              required
             />
           </div>
-          <div className="flex-col gap-xs">
-            <label>Corporate Contact Person Name</label>
-            <input 
-              type="text" 
-              value={formData.contact} 
-              onChange={(e) => setFormData({...formData, contact: e.target.value})} 
-            />
+          <div className="grid-cols-2">
+            <div className="flex-col gap-xs">
+              <label>Corporate Contact Person Name</label>
+              <input 
+                type="text" 
+                value={formData.contact} 
+                onChange={(e) => setFormData({...formData, contact: e.target.value})} 
+                required
+              />
+            </div>
+            <div className="flex-col gap-xs">
+              <label>Representative Position / Job Title</label>
+              <input 
+                type="text" 
+                value={formData.jobTitle} 
+                onChange={(e) => setFormData({...formData, jobTitle: e.target.value})} 
+                required
+              />
+            </div>
           </div>
           <div className="grid-cols-2">
             <div className="flex-col gap-xs">
@@ -263,6 +338,7 @@ export default function ManageAgencies() {
                 type="text" 
                 value={formData.phone} 
                 onChange={(e) => setFormData({...formData, phone: e.target.value})} 
+                required
               />
             </div>
             <div className="flex-col gap-xs">
@@ -271,6 +347,7 @@ export default function ManageAgencies() {
                 type="email" 
                 value={formData.email} 
                 onChange={(e) => setFormData({...formData, email: e.target.value})} 
+                required
               />
             </div>
           </div>
@@ -286,7 +363,7 @@ export default function ManageAgencies() {
         {selectedAgency && (
           <div className="flex-col gap-md" style={{ fontSize: 'var(--font-size-sm)' }}>
             <div className="box-card" style={{ backgroundColor: 'var(--card-bg-subtle)', border: '1px solid var(--border-light)' }}>
-              <div className="grid-cols-2 gap-md" style={{ display: 'grid', gridTemplateColumns: '120px 1fr', rowGap: '12px' }}>
+              <div className="grid-cols-2 gap-md" style={{ display: 'grid', gridTemplateColumns: '150px 1fr', rowGap: '12px' }}>
                 <strong>Agency Code:</strong>
                 <span>{selectedAgency.code}</span>
 
@@ -298,6 +375,9 @@ export default function ManageAgencies() {
 
                 <strong>Contact Person:</strong>
                 <span>{selectedAgency.contact || 'N/A'}</span>
+
+                <strong>Representative Position:</strong>
+                <span>{selectedAgency.jobTitle || 'N/A'}</span>
 
                 <strong>Phone Link:</strong>
                 <span>{selectedAgency.phone || 'N/A'}</span>

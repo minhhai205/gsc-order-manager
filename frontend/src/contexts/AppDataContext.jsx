@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
 const AppDataContext = createContext();
@@ -10,10 +10,10 @@ const initialAgencies = [
 ];
 
 const initialEquipment = [
-  { id: 1, code: 'EQ-TAC-01', name: 'Tactical Mobile Communication Hub', price: 12500, stock: 15, minStock: 5, status: 'ACTIVE' },
-  { id: 2, code: 'EQ-SVR-02', name: 'Rugged Server Rack Alpha', price: 24000, stock: 8, minStock: 3, status: 'ACTIVE' },
-  { id: 3, code: 'EQ-THM-03', name: 'Thermal Imaging Scanner', price: 4800, stock: 22, minStock: 10, status: 'ACTIVE' },
-  { id: 4, code: 'EQ-SAT-04', name: 'Encrypted Satellite Receiver', price: 8500, stock: 4, minStock: 5, status: 'ACTIVE' }
+  { id: 1, code: 'EQ-TAC-01', name: 'Tactical Mobile Communication Hub', manufacturer: 'GSC Systems', hardwareConfig: 'Intel Xeon 16-Core, 64GB RAM, LTE-A Encrypted Transceiver', price: 12500, stock: 15, minStock: 5, status: 'ACTIVE' },
+  { id: 2, code: 'EQ-SVR-02', name: 'Rugged Server Rack Alpha', manufacturer: 'AlphaTech', hardwareConfig: 'Dual AMD EPYC, 256GB RAM, 10TB NVMe RAID-5', price: 24000, stock: 8, minStock: 3, status: 'ACTIVE' },
+  { id: 3, code: 'EQ-THM-03', name: 'Thermal Imaging Scanner', manufacturer: 'Raytheon', hardwareConfig: 'FLIR High-Res Thermal Core, MIL-SPEC Chassis', price: 4800, stock: 22, minStock: 10, status: 'ACTIVE' },
+  { id: 4, code: 'EQ-SAT-04', name: 'Encrypted Satellite Receiver', manufacturer: 'Lockheed', hardwareConfig: 'Ka-Band SATCOM Modem, AES-256 Decryption Engine', price: 8500, stock: 4, minStock: 5, status: 'ACTIVE' }
 ];
 
 const initialContracts = [
@@ -103,11 +103,25 @@ export function AppDataProvider({ children }) {
   const [equipment, setEquipment] = useState(initialEquipment);
   const [contracts, setContracts] = useState(initialContracts);
   const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
-  const [auditLogs, setAuditLogs] = useState(initialAuditLogs);
+  const [auditLogs, setAuditLogs] = useState(() => {
+    const saved = localStorage.getItem('gsc-audit-logs');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error('Failed to parse audit logs from localStorage', e);
+      }
+    }
+    return initialAuditLogs;
+  });
   const [exceptionReports, setExceptionReports] = useState([]);
   const [shippingBills, setShippingBills] = useState([]);
   const [rejectionLetters, setRejectionLetters] = useState([]);
   const [backups, setBackups] = useState([]);
+
+  useEffect(() => {
+    localStorage.setItem('gsc-audit-logs', JSON.stringify(auditLogs));
+  }, [auditLogs]);
 
   const addAuditLog = (action, entity, details) => {
     const newLog = {
@@ -635,6 +649,8 @@ export function AppDataProvider({ children }) {
       id: Date.now(),
       code: data.code,
       name: data.name,
+      manufacturer: data.manufacturer || 'General GSC Vendor',
+      hardwareConfig: data.hardwareConfig || 'Standard Configuration',
       price: parseFloat(data.price),
       stock: parseInt(data.stock),
       minStock: parseInt(data.minStock),
@@ -650,6 +666,8 @@ export function AppDataProvider({ children }) {
       ...e, 
       code: data.code,
       name: data.name,
+      manufacturer: data.manufacturer || e.manufacturer || 'General GSC Vendor',
+      hardwareConfig: data.hardwareConfig || e.hardwareConfig || 'Standard Configuration',
       price: parseFloat(data.price), 
       stock: parseInt(data.stock), 
       minStock: parseInt(data.minStock) 
@@ -677,7 +695,8 @@ export function AppDataProvider({ children }) {
       handleConfirmExceptionReport, handleConfirmShipping, closeAndArchivePo,
       triggerDatabaseBackup, triggerDatabaseRestore,
       handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract,
-      handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo
+      handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo,
+      addAuditLog
     }}>
       {children}
     </AppDataContext.Provider>

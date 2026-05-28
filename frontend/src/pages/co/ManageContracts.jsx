@@ -3,7 +3,7 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Plus, Edit2, Trash2, Eye, ShieldAlert, Award } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, ShieldAlert, Award, CheckCircle, AlertTriangle, X } from 'lucide-react';
 
 export default function ManageContracts() {
   const { 
@@ -22,6 +22,16 @@ export default function ManageContracts() {
 
   // Active records state
   const [selectedContract, setSelectedContract] = useState(null);
+
+  // System alert notifications
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
 
   // Forms state
   const [formData, setFormData] = useState({ agencyId: '', code: '', costLimit: '', endDate: '', allowedEquipment: [] });
@@ -55,22 +65,42 @@ export default function ManageContracts() {
 
   const onCreateSubmit = (e) => {
     e.preventDefault();
-    if (!formData.agencyId || !formData.code || !formData.costLimit) return;
+    if (!formData.agencyId || !formData.code || !formData.costLimit) {
+      triggerAlert('danger', 'Error: All creation fields are required.');
+      return;
+    }
+    const budget = parseFloat(formData.costLimit);
+    if (isNaN(budget) || budget <= 0) {
+      triggerAlert('danger', 'Error: Budget Cap must be a positive number greater than zero.');
+      return;
+    }
     handleCreateContract(formData);
     setShowCreateModal(false);
+    triggerAlert('success', `Standing Contract ${formData.code} was issued successfully!`);
   };
 
   const onEditSubmit = (e) => {
     e.preventDefault();
-    if (!selectedContract || !formData.code || !formData.costLimit) return;
+    if (!selectedContract || !formData.costLimit) {
+      triggerAlert('danger', 'Error: Cost Limit is required.');
+      return;
+    }
+    const budget = parseFloat(formData.costLimit);
+    if (isNaN(budget) || budget <= 0) {
+      triggerAlert('danger', 'Error: Budget Cap must be a positive number greater than zero.');
+      return;
+    }
     handleUpdateContract(selectedContract.id, formData);
     setShowEditModal(false);
+    triggerAlert('success', `Standing Contract ${formData.code} was successfully updated.`);
   };
 
   const onDeleteConfirm = () => {
     if (!selectedContract) return;
+    const code = selectedContract.code;
     handleDeleteContract(selectedContract.id);
     setShowDeleteConfirm(false);
+    triggerAlert('success', `Standing Contract ${code} has been annulled and deleted.`);
   };
 
   const toggleEquipmentInWhitelist = (eqId, isEdit = false) => {
@@ -109,6 +139,25 @@ export default function ManageContracts() {
           Issue New Contract
         </button>
       </div>
+
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       <div className="box-card">
         <div className="table-container">
@@ -221,7 +270,8 @@ export default function ManageContracts() {
               <label>Cost Limit Budget ($)</label>
               <input 
                 type="number" 
-                placeholder="Budget cap limit" 
+                placeholder="e.g. 500000" 
+                min="1"
                 value={formData.costLimit} 
                 onChange={(e) => setFormData({...formData, costLimit: e.target.value})} 
                 required 
@@ -233,6 +283,7 @@ export default function ManageContracts() {
                 type="date" 
                 value={formData.endDate} 
                 onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+                required
               />
             </div>
           </div>
@@ -273,12 +324,12 @@ export default function ManageContracts() {
               </select>
             </div>
             <div className="flex-col gap-xs">
-              <label>Contract Code</label>
+              <label>Contract Code (Locked)</label>
               <input 
                 type="text" 
                 value={formData.code} 
-                onChange={(e) => setFormData({...formData, code: e.target.value})} 
-                required 
+                disabled 
+                style={{ opacity: 0.6 }} 
               />
             </div>
           </div>
@@ -287,6 +338,7 @@ export default function ManageContracts() {
               <label>Cost Limit Budget ($)</label>
               <input 
                 type="number" 
+                min="1"
                 value={formData.costLimit} 
                 onChange={(e) => setFormData({...formData, costLimit: e.target.value})} 
                 required 
@@ -298,6 +350,7 @@ export default function ManageContracts() {
                 type="date" 
                 value={formData.endDate} 
                 onChange={(e) => setFormData({...formData, endDate: e.target.value})} 
+                required
               />
             </div>
           </div>

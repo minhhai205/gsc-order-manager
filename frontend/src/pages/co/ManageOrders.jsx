@@ -6,7 +6,8 @@ import Badge from '../../components/ui/Badge';
 import { 
   Plus, Edit2, Trash2, Eye, ShieldAlert, Check, FileWarning, 
   Archive, Mail, PlusCircle, Trash, Truck, Calendar, MapPin, 
-  AlertTriangle, DollarSign, Info, ShieldCheck, Clock 
+  AlertTriangle, DollarSign, Info, ShieldCheck, Clock, Search,
+  CheckCircle, X
 } from 'lucide-react';
 
 export default function ManageOrders() {
@@ -32,6 +33,16 @@ export default function ManageOrders() {
   // Active records state
   const [selectedPo, setSelectedPo] = useState(null);
   const [selectedLetter, setSelectedLetter] = useState(null);
+
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
 
   // Advanced Forms state
   const [formData, setFormData] = useState({ 
@@ -92,9 +103,11 @@ export default function ManageOrders() {
   };
 
   const handlePoItemChange = (index, field, value) => {
-    const updatedItems = [...formData.items];
-    updatedItems[index][field] = value;
-    setFormData(prev => ({ ...prev, items: updatedItems }));
+    setFormData(prev => {
+      const items = [...prev.items];
+      items[index] = { ...items[index], [field]: value };
+      return { ...prev, items };
+    });
   };
 
   const addPoItemField = () => {
@@ -115,24 +128,31 @@ export default function ManageOrders() {
   const onCreateSubmit = (e) => {
     e.preventDefault();
     if (!formData.poNumber || !formData.contractId || formData.items.some(item => !item.equipmentId || !item.quantity)) {
-      alert("Error: Please verify all required items fields are completed!");
+      triggerAlert('danger', "Error: Please verify all required items fields are completed!");
       return;
     }
     handleCreatePo(formData);
     setShowCreateModal(false);
+    triggerAlert('success', `Purchase Order ${formData.poNumber} has been successfully digitized!`);
   };
 
   const onEditSubmit = (e) => {
     e.preventDefault();
-    if (!selectedPo || !formData.poNumber || !formData.contractId) return;
+    if (!selectedPo || !formData.poNumber || !formData.contractId) {
+      triggerAlert('danger', 'Error: All fields are required.');
+      return;
+    }
     handleUpdatePo(selectedPo.id, formData);
     setShowEditModal(false);
+    triggerAlert('success', `Purchase Order ${formData.poNumber} metadata updated successfully.`);
   };
 
   const onDeleteConfirm = () => {
     if (!selectedPo) return;
+    const poNumber = selectedPo.poNumber;
     handleDeletePo(selectedPo.id);
     setShowDeleteConfirm(false);
+    triggerAlert('success', `Purchase Order ${poNumber} has been successfully deleted.`);
   };
 
   const openRejectionLetter = (po) => {
@@ -149,6 +169,7 @@ export default function ManageOrders() {
   const onSendRejectionLetter = (id) => {
     handleSendRejectionLetter(id);
     setShowLetterModal(false);
+    triggerAlert('success', 'Official rejection letter has been issued and emailed to the agency.');
   };
 
   if (!isCo) {
@@ -185,6 +206,25 @@ export default function ManageOrders() {
           Digitize Purchase Order
         </button>
       </div>
+
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       {/* Spacious Search bar */}
       <div className="box-card" style={{ padding: '16px', marginBottom: '20px' }}>
@@ -284,7 +324,10 @@ export default function ManageOrders() {
                           
                           {po.status === 'PENDING' ? (
                             <button
-                              onClick={() => validatePurchaseOrder(po.id)}
+                              onClick={() => {
+                                validatePurchaseOrder(po.id);
+                                triggerAlert('success', `Compliance check ran successfully for PO: ${po.poNumber}`);
+                              }}
                               className="btn btn-primary"
                               style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}
                             >
@@ -302,7 +345,10 @@ export default function ManageOrders() {
                             </button>
                           ) : po.status === 'SHIPPED' ? (
                             <button
-                              onClick={() => closeAndArchivePo(po.id)}
+                              onClick={() => {
+                                closeAndArchivePo(po.id);
+                                triggerAlert('success', `Purchase order ${po.poNumber} has been successfully closed and archived.`);
+                              }}
                               className="btn btn-success"
                               style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}
                             >

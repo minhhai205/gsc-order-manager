@@ -3,7 +3,7 @@ import { useAppData } from '../../contexts/AppDataContext';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
-import { Play, ShieldAlert, AlertTriangle, FileWarning, Check, Eye } from 'lucide-react';
+import { Play, ShieldAlert, AlertTriangle, FileWarning, Check, Eye, CheckCircle, X } from 'lucide-react';
 
 export default function AvailabilityChecks() {
   const { 
@@ -23,6 +23,16 @@ export default function AvailabilityChecks() {
   const [selectedShortages, setSelectedShortages] = useState([]);
   const [selectedReport, setSelectedReport] = useState(null);
 
+  // System notification alert state
+  const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
+
+  const triggerAlert = (type, message) => {
+    setSystemAlert({ type, message });
+    setTimeout(() => {
+      setSystemAlert({ type: '', message: '' });
+    }, 4500);
+  };
+
   const runCheck = (po) => {
     const result = handleInventoryCheck(po);
     if (!result.success) {
@@ -30,7 +40,7 @@ export default function AvailabilityChecks() {
       setSelectedShortages(result.shortages);
       setShowShortageModal(true);
     } else {
-      alert(`Inventory allocation check cleared successfully for PO: ${po.poNumber}! Validated for shipment.`);
+      triggerAlert('success', `Inventory allocation check cleared successfully for PO: ${po.poNumber}! Validated for shipment.`);
     }
   };
 
@@ -40,6 +50,7 @@ export default function AvailabilityChecks() {
     setShowShortageModal(false);
     setSelectedPo(null);
     setSelectedShortages([]);
+    triggerAlert('success', `Deficit exception report EXP-${Date.now()} has been successfully generated.`);
   };
 
   const viewReportDetails = (report) => {
@@ -72,6 +83,25 @@ export default function AvailabilityChecks() {
           <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)' }}>Perform physical stock allocation checks and issue shortage reports.</p>
         </div>
       </div>
+
+      {systemAlert.message && (
+        <div 
+          className={`${systemAlert.type === 'success' ? 'success-alert' : 'error-alert'} flex-row align-center justify-between`} 
+          style={{ marginBottom: '20px', padding: '12px 20px', borderRadius: 'var(--border-radius-md)', animation: 'pulse-glow-simple 2s' }}
+        >
+          <div className="flex-row align-center gap-xs">
+            {systemAlert.type === 'success' ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}
+            <span>{systemAlert.message}</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setSystemAlert({ type: '', message: '' })} 
+            style={{ background: 'transparent', border: 'none', color: 'inherit', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
 
       <div className="grid-cols-3 gap-lg" style={{ marginBottom: '32px' }}>
         {/* Outstanding checks list */}
