@@ -48,9 +48,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/login", "/api/auth/refresh-token").permitAll()
                 .requestMatchers("/api/health").permitAll()
-                .requestMatchers("/api/users/**", "/api/backups/**", "/api/restores/**")
+                .requestMatchers("/api/users/**", "/api/audit-logs/**", "/api/backups/**", "/api/restores/**")
                     .hasRole("SYSTEM_ADMIN")
-                .requestMatchers("/api/audit-logs/**").authenticated()
                 .requestMatchers("/api/agencies/**", "/api/contracts/**", "/api/purchase-orders/**", "/api/rejection-letters/**")
                     .hasAnyRole("SYSTEM_ADMIN", "CONTRACTING_OFFICER")
                 .requestMatchers("/api/fulfillment/**", "/api/exception-reports/**")

@@ -1,17 +1,16 @@
 package com.httt.gsc_order_manager.controller;
 
-import com.httt.gsc_order_manager.dto.audit.AuditLogResponse;
-import com.httt.gsc_order_manager.dto.audit.CreateAuditLogRequest;
+import com.httt.gsc_order_manager.dto.auditlog.AuditLogResponse;
 import com.httt.gsc_order_manager.dto.common.ApiResponse;
+import com.httt.gsc_order_manager.dto.common.PagedResponse;
+import com.httt.gsc_order_manager.entity.enums.AuditAction;
 import com.httt.gsc_order_manager.service.AuditLogService;
-import jakarta.validation.Valid;
-import java.util.List;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,16 +24,14 @@ public class AuditLogController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AuditLogResponse>>> findAll() {
-        List<AuditLogResponse> response = auditLogService.findAll();
-        return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully", response));
-    }
-
-    @PostMapping
-    public ResponseEntity<ApiResponse<AuditLogResponse>> create(@Valid @RequestBody CreateAuditLogRequest request) {
-        AuditLogResponse response = auditLogService.create(request);
-        return ResponseEntity
-            .status(HttpStatus.CREATED)
-            .body(ApiResponse.success("Audit log recorded successfully", response));
+    public ResponseEntity<ApiResponse<PagedResponse<AuditLogResponse>>> findAll(
+        @RequestParam(required = false) String keyword,
+        @RequestParam(required = false) AuditAction action,
+        @RequestParam(required = false) String entityName,
+        @RequestParam(required = false) String entityId,
+        @PageableDefault(size = 20, sort = "occurredAt") Pageable pageable
+    ) {
+        return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully",
+            auditLogService.findAll(keyword, action, entityName, entityId, pageable)));
     }
 }
