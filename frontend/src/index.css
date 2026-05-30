@@ -22,247 +22,243 @@
   --border-radius-lg: 20px;
   --border-radius-xl: 30px;
 
-  /* default Theme Variables: Premium Indigo & Sky */
-  --bg-primary: #060814;
-  --bg-secondary: #0c0f22;
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-muted: #94a3b8;
-  --card-bg: rgba(12, 15, 34, 0.7);
-  --border-light: rgba(129, 140, 248, 0.1);
-  --border-medium: rgba(129, 140, 248, 0.2);
-  --border-focus: #818cf8;
-  --color-focus: #4f46e5;
-  --color-primary: #818cf8;
-  --color-primary-light: rgba(129, 140, 248, 0.12);
-  --color-secondary: #38bdf8;
-  --color-secondary-light: rgba(56, 189, 248, 0.12);
+  /* Default Theme Variables: Premium Modern Slate & Sapphire */
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #57657a;
+  --card-bg: #ffffff;
+  --card-bg-subtle: #f8fafc;
+  --border-light: rgba(15, 23, 42, 0.08);
+  --border-medium: rgba(15, 23, 42, 0.15);
+  --border-focus: #3b82f6;
+  --color-focus: #1d4ed8;
+  --color-primary: #2563eb;
+  --color-primary-light: rgba(37, 99, 235, 0.05);
+  --color-secondary: #0f766e;
+  --color-secondary-light: rgba(15, 118, 110, 0.05);
   
-  --color-success: #34d399;
-  --color-success-bg: rgba(52, 211, 153, 0.12);
-  --color-warning: #fbbf24;
-  --color-warning-bg: rgba(251, 191, 36, 0.12);
-  --color-danger: #f87171;
-  --color-danger-bg: rgba(248, 113, 113, 0.12);
-  --color-info: #60a5fa;
-  --color-info-bg: rgba(96, 165, 250, 0.12);
+  --color-success: #15803d;
+  --color-success-bg: rgba(21, 128, 61, 0.08);
+  --color-warning: #b45309;
+  --color-warning-bg: rgba(180, 83, 9, 0.08);
+  --color-danger: #be123c;
+  --color-danger-bg: rgba(190, 18, 60, 0.08);
+  --color-info: #0369a1;
+  --color-info-bg: rgba(3, 105, 161, 0.08);
   
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 25px rgba(129, 140, 248, 0.20);
-  --glow-1: hsla(250, 65%, 65%, 0.15);
-  --glow-2: hsla(190, 55%, 75%, 0.12);
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.08);
+  --glow-1: hsla(220, 85%, 85%, 0.16);
+  --glow-2: hsla(270, 75%, 85%, 0.14);
   
-  --scrollbar-thumb: #2d3748;
-  --scrollbar-track: #0a0d16;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track: #f1f5f9;
   
   box-sizing: border-box;
 }
 
 /* ═══════════════════════════════════════════════════════
-   SEASONAL HIGHLIGHT THEMES (Accents & Ambient Glows)
+   SEASONAL HIGHLIGHT THEMES (Elegant Accent Outlines Only)
    ═══════════════════════════════════════════════════════ */
 
-/* 1. Tết / Xuân Theme: Majestic Imperial Red & Royal Gold */
+/* 1. Tết / Xuân Theme: Crimson & Warm Amber Accents */
 body.tet {
-  --border-focus: #f87171;
-  --color-focus: #b91c1c;
-  --color-primary: #ef4444; /* Imperial Red */
-  --color-primary-light: rgba(239, 68, 68, 0.15);
-  --color-secondary: #fbbf24; /* Royal Gold */
-  --color-secondary-light: rgba(251, 191, 36, 0.15);
-  --shadow-glow: 0 0 25px rgba(239, 68, 68, 0.25);
-  --glow-1: hsla(10, 85%, 62%, 0.20);
-  --glow-2: hsla(45, 85%, 65%, 0.15);
+  --border-focus: #b91c1c;
+  --color-focus: #991b1b;
+  --color-primary: #b91c1c;
+  --color-primary-light: rgba(185, 28, 28, 0.05);
+  --color-secondary: #b45309;
+  --color-secondary-light: rgba(180, 83, 9, 0.05);
+  --shadow-glow: 0 0 15px rgba(185, 28, 28, 0.08);
+  --glow-1: hsla(10, 85%, 85%, 0.18);
+  --glow-2: hsla(45, 85%, 85%, 0.15);
 }
 
-/* 2. Spring Theme: Fresh Cherry Blossom Pink & Mint Green */
+/* 2. Spring Theme: Pink Blossom & Mint Accents */
 body.spring {
-  --border-focus: #f472b6;
-  --color-focus: #db2777;
-  --color-primary: #f472b6; /* Cherry Blossom Pink */
-  --color-primary-light: rgba(244, 114, 182, 0.15);
-  --color-secondary: #34d399; /* Mint Green */
-  --color-secondary-light: rgba(52, 211, 153, 0.15);
-  --shadow-glow: 0 0 25px rgba(244, 114, 182, 0.25);
-  --glow-1: hsla(335, 75%, 70%, 0.18);
-  --glow-2: hsla(150, 60%, 75%, 0.15);
+  --border-focus: #db2777;
+  --color-focus: #be185d;
+  --color-primary: #db2777;
+  --color-primary-light: rgba(219, 39, 119, 0.05);
+  --color-secondary: #0f766e;
+  --color-secondary-light: rgba(15, 118, 110, 0.05);
+  --shadow-glow: 0 0 15px rgba(219, 39, 119, 0.08);
+  --glow-1: hsla(335, 75%, 85%, 0.16);
+  --glow-2: hsla(150, 60%, 85%, 0.14);
 }
 
-/* 3. Summer Theme: Deep Ocean Turquoise & Warm Sunshine Gold */
+/* 3. Summer Theme: Turquoise Ocean & Copper Accents */
 body.summer {
-  --border-focus: #06b6d4;
-  --color-focus: #0891b2;
-  --color-primary: #06b6d4; /* Ocean Turquoise */
-  --color-primary-light: rgba(6, 182, 212, 0.15);
-  --color-secondary: #f59e0b; /* Sunshine Gold */
-  --color-secondary-light: rgba(245, 158, 11, 0.15);
-  --shadow-glow: 0 0 25px rgba(6, 182, 212, 0.25);
-  --glow-1: hsla(190, 80%, 65%, 0.20);
-  --glow-2: hsla(40, 80%, 70%, 0.15);
+  --border-focus: #0284c7;
+  --color-focus: #0369a1;
+  --color-primary: #0284c7;
+  --color-primary-light: rgba(2, 132, 199, 0.05);
+  --color-secondary: #b45309;
+  --color-secondary-light: rgba(180, 83, 9, 0.05);
+  --shadow-glow: 0 0 15px rgba(2, 132, 199, 0.08);
+  --glow-1: hsla(190, 80%, 85%, 0.18);
+  --glow-2: hsla(40, 80%, 85%, 0.15);
 }
 
-/* 4. Autumn Theme: Copper Orange & Golden Maple Yellow */
+/* 4. Autumn Theme: Terracotta Orange & Bronze Accents */
 body.autumn {
-  --border-focus: #f97316;
-  --color-focus: #c2410c;
-  --color-primary: #f97316; /* Copper Orange */
-  --color-primary-light: rgba(249, 115, 22, 0.15);
-  --color-secondary: #fbbf24; /* Maple Gold */
-  --color-secondary-light: rgba(251, 191, 36, 0.15);
-  --shadow-glow: 0 0 25px rgba(249, 115, 22, 0.25);
-  --glow-1: hsla(25, 80%, 60%, 0.20);
-  --glow-2: hsla(45, 80%, 65%, 0.15);
+  --border-focus: #c2410c;
+  --color-focus: #9a3412;
+  --color-primary: #c2410c;
+  --color-primary-light: rgba(194, 65, 12, 0.05);
+  --color-secondary: #a16207;
+  --color-secondary-light: rgba(161, 98, 7, 0.05);
+  --shadow-glow: 0 0 15px rgba(194, 65, 12, 0.08);
+  --glow-1: hsla(25, 80%, 85%, 0.18);
+  --glow-2: hsla(45, 80%, 85%, 0.15);
 }
 
-/* 5. Winter Theme: Glacier Blue & Polar Silver Mint */
+/* 5. Winter Theme: Glacier Blue & Deep Pine Accents */
 body.winter {
-  --border-focus: #38bdf8;
-  --color-focus: #0284c7;
-  --color-primary: #38bdf8; /* Glacier Blue */
-  --color-primary-light: rgba(56, 189, 248, 0.15);
-  --color-secondary: #a7f3d0; /* Silver Mint */
-  --color-secondary-light: rgba(167, 243, 208, 0.15);
-  --shadow-glow: 0 0 25px rgba(56, 189, 248, 0.25);
-  --glow-1: hsla(210, 80%, 75%, 0.20);
-  --glow-2: hsla(170, 60%, 80%, 0.15);
+  --border-focus: #0369a1;
+  --color-focus: #1d4ed8;
+  --color-primary: #0369a1;
+  --color-primary-light: rgba(3, 105, 161, 0.05);
+  --color-secondary: #0f766e;
+  --color-secondary-light: rgba(15, 118, 110, 0.05);
+  --shadow-glow: 0 0 15px rgba(3, 105, 161, 0.08);
+  --glow-1: hsla(210, 80%, 85%, 0.18);
+  --glow-2: hsla(170, 60%, 85%, 0.14);
 }
 
 /* ═══════════════════════════════════════════════════════
-   LIGHT MODE CONTRAST OVERRIDES (Beautiful, non-glare, non-grey)
+   LIGHT MODE CONTRAST OVERRIDES (Modern slate neutral Canvas)
    ═══════════════════════════════════════════════════════ */
 html.light body {
-  --bg-primary: #cbd8f0; /* Soft slate-tinted periwinkle (no glare, distinctly colored) */
-  --bg-secondary: #b3c7e8; /* Richer slate background */
-  --text-primary: #0a1128; /* Deep navy-slate (high contrast) */
-  --text-secondary: #1e293b; /* Mid navy-slate */
-  --text-muted: #3b4e68; /* Tinted readable muted text (no pure grey) */
-  --card-bg: rgba(223, 232, 246, 0.95); /* Light periwinkle card background, distinctly colored, non-white */
-  --border-light: rgba(10, 17, 40, 0.15);
-  --border-medium: rgba(10, 17, 40, 0.25);
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #e2e8f0;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #57657a;
+  --card-bg: #ffffff;
+  --card-bg-subtle: #f8fafc;
+  --border-light: rgba(15, 23, 42, 0.08);
+  --border-medium: rgba(15, 23, 42, 0.15);
   --border-focus: #3b82f6;
-  --color-focus: #1d4ed8; /* Darker navy blue for premium gradient stop */
+  --color-focus: #1d4ed8;
   --color-primary: #2563eb;
-  --color-primary-light: rgba(37, 99, 235, 0.08);
-  --color-secondary: #0284c7;
-  --color-secondary-light: rgba(2, 132, 199, 0.08);
+  --color-primary-light: rgba(37, 99, 235, 0.05);
+  --color-secondary: #0f766e;
+  --color-secondary-light: rgba(15, 118, 110, 0.05);
   
-  --color-success: #16a34a;
-  --color-success-bg: rgba(22, 163, 74, 0.12);
-  --color-warning: #ea580c;
-  --color-warning-bg: rgba(234, 88, 12, 0.12);
-  --color-danger: #dc2626;
-  --color-danger-bg: rgba(220, 38, 38, 0.12);
-  --color-info: #0284c7;
-  --color-info-bg: rgba(2, 132, 199, 0.12);
+  --color-success: #15803d;
+  --color-success-bg: rgba(21, 128, 61, 0.08);
+  --color-warning: #b45309;
+  --color-warning-bg: rgba(180, 83, 9, 0.08);
+  --color-danger: #be123c;
+  --color-danger-bg: rgba(190, 18, 60, 0.08);
+  --color-info: #0369a1;
+  --color-info-bg: rgba(3, 105, 161, 0.08);
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 10px 30px -5px rgba(0, 0, 0, 0.12);
-  --shadow-lg: 0 20px 40px -15px rgba(0, 0, 0, 0.16);
-  --shadow-glow: 0 0 25px rgba(37, 99, 235, 0.2);
-  --glow-1: hsla(220, 65%, 80%, 0.25);
-  --glow-2: hsla(200, 55%, 85%, 0.25);
-  --scrollbar-thumb: #94a3b8;
-  --scrollbar-track: #cbd8f0;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.02);
+  --shadow-md: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 20px 25px -5px rgba(15, 23, 42, 0.1), 0 10px 10px -5px rgba(15, 23, 42, 0.04);
+  --shadow-glow: 0 0 15px rgba(37, 99, 235, 0.08);
+  --glow-1: hsla(220, 85%, 85%, 0.16);
+  --glow-2: hsla(270, 75%, 85%, 0.14);
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track: #f1f5f9;
 }
 
 html.light .btn-secondary {
-  background: rgba(10, 17, 40, 0.06);
+  background: #ffffff;
   color: var(--text-primary);
-  border: 1px solid rgba(10, 17, 40, 0.15);
+  border: 1px solid var(--border-medium);
 }
 html.light .btn-secondary:hover {
-  background: rgba(10, 17, 40, 0.12);
+  background: var(--bg-secondary);
 }
 
 /* Light mode individual theme overrides to keep contrast high and theme colors beautiful */
 html.light body.tet {
-  --bg-primary: #fbcbcb; /* Beautiful rich pastel rose */
-  --bg-secondary: #f7a8a8; /* Deeper pastel rose */
-  --card-bg: #fde2e2; /* Beautiful rose-tinted cream, clearly pink, non-white */
-  --text-primary: #5c0f0f; /* Deep dark mahogany crimson */
-  --text-secondary: #7a1515;
-  --text-muted: #9c2727;
-  --border-light: rgba(92, 15, 15, 0.18);
-  --border-medium: rgba(92, 15, 15, 0.3);
+  --border-focus: #b91c1c;
   --color-focus: #991b1b;
-  --color-primary: #ef4444;
-  --color-secondary: #d97706;
+  --color-primary: #b91c1c;
+  --color-primary-light: rgba(185, 28, 28, 0.05);
+  --color-secondary: #b45309;
+  --color-secondary-light: rgba(180, 83, 9, 0.05);
+  --shadow-glow: 0 0 15px rgba(185, 28, 28, 0.06);
+  --glow-1: rgba(185, 28, 28, 0.02);
+  --glow-2: rgba(180, 83, 9, 0.02);
 }
 
 html.light body.spring {
-  --bg-primary: #c2eed5; /* Beautiful pastel mint green */
-  --bg-secondary: #9fe2bd; /* Deeper mint green */
-  --card-bg: #dcf6e7; /* Soft light mint/sage, distinctly colored green-tint, non-white */
-  --text-primary: #042f1a; /* Deep forest dark green */
-  --text-secondary: #064e2d;
-  --text-muted: #0b7244;
-  --border-light: rgba(4, 47, 26, 0.18);
-  --border-medium: rgba(4, 47, 26, 0.3);
+  --border-focus: #db2777;
   --color-focus: #be185d;
-  --color-primary: #ec4899; /* Cherry Blossom Pink */
-  --color-secondary: #10b981;
+  --color-primary: #db2777;
+  --color-primary-light: rgba(219, 39, 119, 0.05);
+  --color-secondary: #0f766e;
+  --color-secondary-light: rgba(15, 118, 110, 0.05);
+  --shadow-glow: 0 0 15px rgba(219, 39, 119, 0.06);
+  --glow-1: rgba(219, 39, 119, 0.02);
+  --glow-2: rgba(15, 118, 110, 0.02);
 }
 
 html.light body.summer {
-  --bg-primary: #bee5f7; /* Beautiful soft sky-blue/cyan */
-  --bg-secondary: #90d3f2;
-  --card-bg: #d5effb; /* Soft ice blue, distinctly blue and non-white */
-  --text-primary: #042e47; /* Deep ocean blue */
-  --text-secondary: #084c70;
-  --text-muted: #0a699c;
-  --border-light: rgba(4, 46, 71, 0.18);
-  --border-medium: rgba(4, 46, 71, 0.3);
-  --color-focus: #0e7490;
-  --color-primary: #06b6d4;
-  --color-secondary: #d97706;
+  --border-focus: #0284c7;
+  --color-focus: #0369a1;
+  --color-primary: #0284c7;
+  --color-primary-light: rgba(2, 132, 199, 0.05);
+  --color-secondary: #b45309;
+  --color-secondary-light: rgba(180, 83, 9, 0.05);
+  --shadow-glow: 0 0 15px rgba(2, 132, 199, 0.06);
+  --glow-1: rgba(2, 132, 199, 0.02);
+  --glow-2: rgba(180, 83, 9, 0.02);
 }
 
 html.light body.autumn {
-  --bg-primary: #f5dfbe; /* Beautiful warm pastel tan/beige */
-  --bg-secondary: #ebce9d;
-  --card-bg: #faedd9; /* Soft golden-sand cream, rich tint, non-white */
-  --text-primary: #3d1703; /* Deep dark espresso/copper brown */
-  --text-secondary: #5c2509;
-  --text-muted: #853b0e;
-  --border-light: rgba(61, 23, 3, 0.18);
-  --border-medium: rgba(61, 23, 3, 0.3);
+  --border-focus: #c2410c;
   --color-focus: #9a3412;
-  --color-primary: #ea580c;
-  --color-secondary: #d97706;
+  --color-primary: #c2410c;
+  --color-primary-light: rgba(194, 65, 12, 0.05);
+  --color-secondary: #a16207;
+  --color-secondary-light: rgba(161, 98, 7, 0.05);
+  --shadow-glow: 0 0 15px rgba(194, 65, 12, 0.06);
+  --glow-1: rgba(194, 65, 12, 0.02);
+  --glow-2: rgba(161, 98, 7, 0.02);
 }
 
 html.light body.winter {
-  --bg-primary: #cce3f0; /* Beautiful icy slate pastel */
-  --bg-secondary: #adcfdf;
-  --card-bg: #e1eff6; /* Soft glacier blue, distinctly colored, non-white */
-  --text-primary: #051c33; /* Deep midnight navy */
-  --text-secondary: #0a3055;
-  --text-muted: #154c80;
-  --border-light: rgba(5, 28, 51, 0.18);
-  --border-medium: rgba(5, 28, 51, 0.3);
-  --color-focus: #0369a1;
-  --color-primary: #0284c7;
-  --color-secondary: #10b981;
+  --border-focus: #0369a1;
+  --color-focus: #1d4ed8;
+  --color-primary: #0369a1;
+  --color-primary-light: rgba(3, 105, 161, 0.05);
+  --color-secondary: #0f766e;
+  --color-secondary-light: rgba(15, 118, 110, 0.05);
+  --shadow-glow: 0 0 15px rgba(3, 105, 161, 0.06);
+  --glow-1: rgba(3, 105, 161, 0.02);
+  --glow-2: rgba(15, 118, 110, 0.02);
 }
 
-/* Light mode transparency and input overrides - strictly no pure white transparent glare */
+/* Light mode transparency and input overrides - clean neutral borders and tints */
 html.light input, html.light select, html.light textarea {
-  background-color: rgba(10, 17, 40, 0.04);
-  border: 1px solid rgba(10, 17, 40, 0.18);
+  background-color: #ffffff;
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
 }
 html.light input:focus, html.light select:focus, html.light textarea:focus {
-  background-color: rgba(10, 17, 40, 0.08);
+  background-color: #ffffff;
+  border-color: var(--border-focus);
 }
 html.light .table-container {
-  background: rgba(10, 17, 40, 0.02);
+  background: #ffffff;
+  border: 1px solid var(--border-medium);
 }
 html.light .premium-table th {
-  background: rgba(10, 17, 40, 0.05);
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--border-medium);
 }
 html.light .premium-table tbody tr:hover td {
-  background-color: rgba(10, 17, 40, 0.04);
+  background-color: var(--bg-primary);
 }
 
 /* Apply background canvas drifts */

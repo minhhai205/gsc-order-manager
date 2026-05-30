@@ -415,7 +415,8 @@ html.light .horizontal-bar-track {
   text-decoration: none;
 }
 html.light .quick-action-link-btn {
-  background: rgba(10, 17, 40, 0.04);
+  background: #ffffff;
+  border: 1px solid var(--border-medium);
 }
 .dark .quick-action-link-btn {
   background: rgba(0,0,0,0.15);
@@ -468,10 +469,13 @@ html.light .quick-action-link-btn {
   border-bottom: 1px solid var(--border-light);
 }
 html.light .audit-item {
-  background: rgba(10, 17, 40, 0.04);
+  background: #ffffff;
+  border-top: 1px solid var(--border-medium);
+  border-right: 1px solid var(--border-medium);
+  border-bottom: 1px solid var(--border-medium);
 }
 html.light .audit-item:hover {
-  background: rgba(10, 17, 40, 0.08);
+  background: var(--bg-secondary);
 }
 .dark .audit-item {
   background: rgba(0,0,0,0.15);
@@ -504,6 +508,11 @@ html.light .audit-item:hover {
   justify-content: center;
   position: relative;
   overflow: hidden;
+  background: 
+    radial-gradient(circle at 10% 10%, rgba(37, 99, 235, 0.12) 0, transparent 40%),
+    radial-gradient(circle at 90% 10%, rgba(219, 39, 119, 0.08) 0, transparent 35%),
+    radial-gradient(circle at 50% 90%, rgba(15, 118, 110, 0.08) 0, transparent 45%),
+    #f1f5f9;
 }
 
 .silk-container {
@@ -511,7 +520,7 @@ html.light .audit-item:hover {
   inset: 0;
   overflow: hidden;
   z-index: 0;
-  opacity: 0.5;
+  opacity: 0.65;
   pointer-events: none;
 }
 
@@ -519,14 +528,21 @@ html.light .audit-item:hover {
   position: absolute;
   width: 150vw;
   height: 100vh;
-  background: linear-gradient(120deg, transparent 0%, rgba(124, 58, 237, 0.15) 25%, rgba(217, 70, 239, 0.2) 50%, rgba(14, 165, 233, 0.15) 75%, transparent 100%);
-  filter: blur(70px);
+  background: linear-gradient(
+    120deg,
+    transparent 0%,
+    rgba(37, 99, 235, 0.18) 28%,
+    rgba(219, 39, 119, 0.14) 52%,
+    rgba(15, 118, 110, 0.14) 74%,
+    transparent 100%
+  );
+  filter: blur(80px);
   transform-origin: center;
   animation: floatRibbon 18s ease-in-out infinite alternate;
 }
 
-.silk-1 { top: -25%; left: -25%; animation-delay: 0s; }
-.silk-2 { bottom: -25%; right: -25%; animation-duration: 22s; animation-direction: alternate-reverse; background: linear-gradient(240deg, transparent, rgba(217,70,239,0.15), rgba(124,58,237,0.2), transparent); }
+.silk-1 { top: -20%; left: -20%; animation-delay: 0s; }
+.silk-2 { bottom: -20%; right: -20%; animation-duration: 22s; animation-direction: alternate-reverse; background: linear-gradient(240deg, transparent, rgba(219,39,119,0.14), rgba(37,99,235,0.18), transparent); }
 
 @keyframes floatRibbon {
   0% { transform: rotate(-5deg) translate(0, 0) scale(1); }
@@ -539,23 +555,27 @@ html.light .audit-item:hover {
   z-index: 10;
   width: 100%;
   max-width: 480px;
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 
+    0 24px 60px -18px rgba(15, 23, 42, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border-radius: var(--border-radius-lg);
   padding: 36px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  color: #ffffff;
+  color: var(--text-primary);
 }
 
 html.light .glass-panel.auth-card, :root:not(.dark) .glass-panel.auth-card {
-  background: var(--card-bg);
-  box-shadow: 0 20px 45px -12px rgba(10, 17, 40, 0.1), inset 0 1px 0 rgba(10, 17, 40, 0.15);
-  border-color: var(--border-medium);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 24px 60px -18px rgba(15, 23, 42, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  border-color: rgba(15, 23, 42, 0.08);
   color: var(--text-primary);
 }
 
@@ -665,10 +685,11 @@ html.light .glass-panel.auth-card, :root:not(.dark) .glass-panel.auth-card {
   gap: 4px;
 }
 html.light .quick-login-btn {
-  background: rgba(10, 17, 40, 0.04);
+  background: #ffffff;
+  border: 1px solid var(--border-medium);
 }
 html.light .quick-login-btn:hover {
-  background: rgba(10, 17, 40, 0.08);
+  background: var(--bg-secondary);
 }
 .dark .quick-login-btn {
   background: rgba(0, 0, 0, 0.25);
