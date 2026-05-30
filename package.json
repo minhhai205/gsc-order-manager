@@ -1,0 +1,14 @@
+{
+  "name": "gsc-order-manager-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm --prefix frontend run dev\" \"npm run backend\"",
+    "backend": "cd backend && mvnw.cmd spring-boot:run",
+    "build": "npm --prefix frontend run build",
+    "install:frontend": "npm --prefix frontend install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

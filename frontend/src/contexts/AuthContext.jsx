@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { api } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -9,58 +10,65 @@ export const ROLES = {
   WAREHOUSE_STAFF: 'WAREHOUSE_STAFF'
 };
 
-const DEFAULT_USERS = [
-  { username: 'admin', password: '123', role: ROLES.SYSTEM_ADMIN, name: 'System Administrator', themeClass: 'default', status: 'ACTIVE', notifications: { emailAlerts: true, stockAlerts: true, dbAlerts: true } },
-  { username: 'officer', password: '123', role: ROLES.CONTRACTING_OFFICER, name: 'Agent John Miller (CO)', themeClass: 'tet', status: 'ACTIVE', notifications: { emailAlerts: true, stockAlerts: false, dbAlerts: false } },
-  { username: 'fulfillment', password: '123', role: ROLES.ORDER_FULFILLMENT_STAFF, name: 'Sarah Connor (Fulfillment)', themeClass: 'summer', status: 'ACTIVE', notifications: { emailAlerts: false, stockAlerts: true, dbAlerts: false } },
-  { username: 'warehouse', password: '123', role: ROLES.WAREHOUSE_STAFF, name: 'Carl Jenkins (Warehouse)', themeClass: 'spring', status: 'ACTIVE', notifications: { emailAlerts: false, stockAlerts: true, dbAlerts: false } }
-];
-
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useState(() => {
-    const saved = localStorage.getItem('gsc-users');
-    if (saved) return JSON.parse(saved);
-    localStorage.setItem('gsc-users', JSON.stringify(DEFAULT_USERS));
-    return DEFAULT_USERS;
-  });
-
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('gsc-current-user');
     return saved ? JSON.parse(saved) : null;
   });
 
   const [authToken, setAuthToken] = useState(() => localStorage.getItem('gsc-auth-token') || '');
+  const [users, setUsers] = useState([]);
 
+  // Fetch current user details on mount to restore session & verify token validity
   useEffect(() => {
-    if (currentUser) {
-      const email = currentUser.username === 'admin' ? 'admin@gsc.local' : `${currentUser.username}@gsc.local`;
-      const password = currentUser.username === 'admin' ? 'Admin@123' : '123';
-
-      fetch('/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email, password })
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Auth failed');
-        return res.json();
-      })
-      .then(data => {
-        if (data && data.accessToken) {
-          setAuthToken(data.accessToken);
-          localStorage.setItem('gsc-auth-token', data.accessToken);
-        }
-      })
-      .catch(err => {
-        console.error('Failed to sync auth with backend', err);
-      });
-    } else {
-      setAuthToken('');
-      localStorage.removeItem('gsc-auth-token');
+    if (authToken && !currentUser) {
+      api.get('/api/auth/me')
+        .then(user => {
+          const mappedUser = {
+            id: user.id,
+            name: user.fullName,
+            username: user.email.split('@')[0],
+            email: user.email,
+            role: user.role,
+            status: user.status,
+            department: user.department,
+            themeClass: localStorage.getItem(`gsc-theme-${user.id}`) || 'default',
+            notifications: JSON.parse(localStorage.getItem(`gsc-notifications-${user.id}`)) || { emailAlerts: true, stockAlerts: true, dbAlerts: false }
+          };
+          setCurrentUser(mappedUser);
+          localStorage.setItem('gsc-current-user', JSON.stringify(mappedUser));
+        })
+        .catch(err => {
+          console.error('Session restoration failed', err);
+          logout();
+        });
     }
-  }, [currentUser]);
+  }, [authToken]);
+
+  // Sync users list if SYSTEM_ADMIN is logged in
+  useEffect(() => {
+    if (currentUser && currentUser.role === ROLES.SYSTEM_ADMIN && authToken) {
+      api.get('/api/users?size=100')
+        .then(body => {
+          if (body && body.data && body.data.content) {
+            setUsers(body.data.content.map(u => ({
+              id: u.id,
+              username: u.email.split('@')[0],
+              name: u.fullName,
+              email: u.email,
+              role: u.role,
+              status: u.status,
+              department: u.department
+            })));
+          }
+        })
+        .catch(err => {
+          console.error('Failed to load user accounts', err);
+        });
+    } else {
+      setUsers([]);
+    }
+  }, [currentUser, authToken]);
 
   // Apply stored seasonal themes class dynamically to body element
   useEffect(() => {
@@ -71,130 +79,230 @@ export function AuthProvider({ children }) {
     }
   }, [currentUser]);
 
-  const login = (username, password) => {
-    const matched = users.find(u => u.username === username.toLowerCase() && u.password === password);
-    if (matched) {
-      if (matched.status === 'SUSPENDED') {
-        return { success: false, message: 'This account has been suspended by the System Administrator.' };
+  // Listen to global unauthorized events (e.g. 401 response from api.js)
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      logout();
+    };
+    window.addEventListener('auth-unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth-unauthorized', handleUnauthorized);
+    };
+  }, []);
+
+  const login = async (username, password) => {
+    try {
+      let email = username;
+      if (!email.includes('@')) {
+        email = `${username.toLowerCase()}@gsc.local`;
       }
-      setCurrentUser(matched);
-      localStorage.setItem('gsc-current-user', JSON.stringify(matched));
-      return { success: true };
+
+      const data = await api.post('/api/auth/login', { email, password });
+      
+      if (data && data.accessToken) {
+        const user = data.user;
+        const mappedUser = {
+          id: user.id,
+          name: user.fullName,
+          username: user.email.split('@')[0],
+          email: user.email,
+          role: user.role,
+          status: user.status,
+          department: user.department,
+          themeClass: localStorage.getItem(`gsc-theme-${user.id}`) || 'default',
+          notifications: JSON.parse(localStorage.getItem(`gsc-notifications-${user.id}`)) || { emailAlerts: true, stockAlerts: true, dbAlerts: false }
+        };
+
+        if (mappedUser.status === 'DISABLED') {
+          return { success: false, message: 'Tài khoản này đã bị khoá bởi Quản trị viên!' };
+        }
+
+        setAuthToken(data.accessToken);
+        setCurrentUser(mappedUser);
+        localStorage.setItem('gsc-auth-token', data.accessToken);
+        localStorage.setItem('gsc-current-user', JSON.stringify(mappedUser));
+        return { success: true };
+      }
+      return { success: false, message: 'Đăng nhập thất bại!' };
+    } catch (err) {
+      return { success: false, message: err.message || 'Sai tên đăng nhập hoặc mật khẩu!' };
     }
-    return { success: false, message: 'Invalid username or password!' };
   };
 
-  const register = (username, password, name, role) => {
-    const exists = users.some(u => u.username === username.toLowerCase());
-    if (exists) {
-      return { success: false, message: 'Username already exists!' };
+  const register = async (username, password, name, role) => {
+    try {
+      let email = username;
+      if (!email.includes('@')) {
+        email = `${username.toLowerCase()}@gsc.local`;
+      }
+
+      await api.post('/api/auth/register', {
+        fullName: name,
+        email,
+        password,
+        role,
+        department: 'GSC HQ'
+      });
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message || 'Đăng ký tài khoản thất bại!' };
     }
-    const newUser = { 
-      username: username.toLowerCase(), 
-      password, 
-      name, 
-      role, 
-      themeClass: 'default',
-      notifications: { emailAlerts: true, stockAlerts: true, dbAlerts: false } 
-    };
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
-    return { success: true };
   };
 
   const logout = () => {
+    // Optionally call logout endpoint (non-blocking)
+    api.post('/api/auth/logout').catch(() => {});
+    
+    setAuthToken('');
     setCurrentUser(null);
+    setUsers([]);
+    localStorage.removeItem('gsc-auth-token');
     localStorage.removeItem('gsc-current-user');
     document.body.className = 'default';
   };
 
-  const updateProfile = (name, password, themeClass, notifications) => {
-    if (!currentUser) return { success: false, message: 'No active session!' };
+  const updateProfile = async (name, password, themeClass, notifications) => {
+    if (!currentUser) return { success: false, message: 'Chưa đăng nhập!' };
     
-    const updated = { ...currentUser, name, password, themeClass, notifications };
-    
-    // Write changes back to active storage registry
-    const updatedUsers = users.map(u => u.username === currentUser.username ? updated : u);
-    setUsers(updatedUsers);
-    localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
-    
-    setCurrentUser(updated);
-    localStorage.setItem('gsc-current-user', JSON.stringify(updated));
-    return { success: true };
+    try {
+      // Update core details on backend
+      const updatedBackend = await api.put(`/api/users/${currentUser.id}`, {
+        fullName: name,
+        email: currentUser.email,
+        department: currentUser.department || 'GSC HQ'
+      });
+
+      // Update local settings
+      localStorage.setItem(`gsc-theme-${currentUser.id}`, themeClass);
+      localStorage.setItem(`gsc-notifications-${currentUser.id}`, JSON.stringify(notifications));
+
+      const updated = { 
+        ...currentUser, 
+        name: updatedBackend.data.fullName, 
+        themeClass, 
+        notifications 
+      };
+      
+      setCurrentUser(updated);
+      localStorage.setItem('gsc-current-user', JSON.stringify(updated));
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message || 'Cập nhật tài khoản thất bại!' };
+    }
   };
 
-  const adminCreateUser = (username, password, name, role, status = 'ACTIVE') => {
+  const adminCreateUser = async (username, password, name, role, status = 'ACTIVE') => {
     if (!currentUser || currentUser.role !== ROLES.SYSTEM_ADMIN) {
-      return { success: false, message: 'Unauthorized! Admin privileges required.' };
+      return { success: false, message: 'Yêu cầu quyền Quản trị viên!' };
     }
-    const exists = users.some(u => u.username === username.toLowerCase());
-    if (exists) {
-      return { success: false, message: 'Username already exists!' };
+
+    try {
+      let email = username;
+      if (!email.includes('@')) {
+        email = `${username.toLowerCase()}@gsc.local`;
+      }
+
+      const res = await api.post('/api/users', {
+        fullName: name,
+        email,
+        password,
+        role,
+        department: 'GSC HQ'
+      });
+
+      if (status === 'DISABLED' && res.data && res.data.id) {
+        await api.patch(`/api/users/${res.data.id}/disable`);
+      }
+
+      // Re-fetch users
+      const body = await api.get('/api/users?size=100');
+      if (body && body.data && body.data.content) {
+        setUsers(body.data.content.map(u => ({
+          id: u.id,
+          username: u.email.split('@')[0],
+          name: u.fullName,
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          department: u.department
+        })));
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message || 'Tạo tài khoản thất bại!' };
     }
-    const newUser = { 
-      username: username.toLowerCase(), 
-      password, 
-      name, 
-      role, 
-      themeClass: 'default',
-      status: status || 'ACTIVE',
-      notifications: { emailAlerts: true, stockAlerts: true, dbAlerts: false } 
-    };
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
-    return { success: true };
   };
 
-  const adminUpdateUser = (username, { name, password, role, status }) => {
+  const adminUpdateUser = async (username, { name, role, status }) => {
     if (!currentUser || currentUser.role !== ROLES.SYSTEM_ADMIN) {
-      return { success: false, message: 'Unauthorized! Admin privileges required.' };
+      return { success: false, message: 'Yêu cầu quyền Quản trị viên!' };
     }
-    const userIndex = users.findIndex(u => u.username === username.toLowerCase());
-    if (userIndex === -1) {
-      return { success: false, message: 'User not found!' };
+
+    try {
+      const targetUser = users.find(u => u.username === username.toLowerCase());
+      if (!targetUser) {
+        return { success: false, message: 'Không tìm thấy người dùng!' };
+      }
+
+      // Update basic info
+      await api.put(`/api/users/${targetUser.id}`, {
+        fullName: name,
+        email: targetUser.email,
+        department: targetUser.department || 'GSC HQ'
+      });
+
+      // Update role if changed
+      if (role !== targetUser.role) {
+        await api.patch(`/api/users/${targetUser.id}/role`, { role });
+      }
+
+      // Update status if changed
+      if (status !== targetUser.status) {
+        if (status === 'DISABLED') {
+          await api.patch(`/api/users/${targetUser.id}/disable`);
+        } else {
+          await api.patch(`/api/users/${targetUser.id}/enable`);
+        }
+      }
+
+      // Re-fetch users list
+      const body = await api.get('/api/users?size=100');
+      if (body && body.data && body.data.content) {
+        const updatedUsers = body.data.content.map(u => ({
+          id: u.id,
+          username: u.email.split('@')[0],
+          name: u.fullName,
+          email: u.email,
+          role: u.role,
+          status: u.status,
+          department: u.department
+        }));
+        setUsers(updatedUsers);
+
+        // If updated self, sync own session
+        if (currentUser.id === targetUser.id) {
+          const self = updatedUsers.find(u => u.id === currentUser.id);
+          const mappedSelf = {
+            ...currentUser,
+            name: self.name,
+            role: self.role,
+            status: self.status
+          };
+          setCurrentUser(mappedSelf);
+          localStorage.setItem('gsc-current-user', JSON.stringify(mappedSelf));
+        }
+      }
+
+      return { success: true };
+    } catch (err) {
+      return { success: false, message: err.message || 'Cập nhật tài khoản thất bại!' };
     }
-    
-    const updatedUsers = [...users];
-    updatedUsers[userIndex] = {
-      ...updatedUsers[userIndex],
-      name,
-      password: password || updatedUsers[userIndex].password,
-      role,
-      status: status || updatedUsers[userIndex].status || 'ACTIVE'
-    };
-    
-    setUsers(updatedUsers);
-    localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
-    
-    // If the updated user is the currently logged-in user, update their active session too!
-    if (currentUser.username === username.toLowerCase()) {
-      const updatedSelf = updatedUsers[userIndex];
-      setCurrentUser(updatedSelf);
-      localStorage.setItem('gsc-current-user', JSON.stringify(updatedSelf));
-    }
-    
-    return { success: true };
   };
 
-  const adminDeleteUser = (username) => {
-    if (!currentUser || currentUser.role !== ROLES.SYSTEM_ADMIN) {
-      return { success: false, message: 'Unauthorized! Admin privileges required.' };
-    }
-    if (currentUser.username === username.toLowerCase()) {
-      return { success: false, message: 'Cannot delete your own administrator account!' };
-    }
-    
-    const exists = users.some(u => u.username === username.toLowerCase());
-    if (!exists) {
-      return { success: false, message: 'User not found!' };
-    }
-    
-    const updatedUsers = users.filter(u => u.username !== username.toLowerCase());
-    setUsers(updatedUsers);
-    localStorage.setItem('gsc-users', JSON.stringify(updatedUsers));
-    return { success: true };
+  const adminDeleteUser = async (username) => {
+    return { success: false, message: 'Xóa tài khoản không được hỗ trợ ở phía backend (chỉ hỗ trợ khóa tài khoản).' };
   };
 
   const hasAccess = (allowedRoles) => {

@@ -1,744 +1,469 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { api } from '../services/api';
 
 const AppDataContext = createContext();
 
-const initialAgencies = [
-  { id: 1, code: 'FBI-GSC', name: 'Federal Bureau of Investigation (FBI)', address: '935 Pennsylvania Avenue NW, Washington, D.C.', contact: 'Agent John Miller', phone: '202-324-3000', email: 'j.miller@fbi.gov', status: 'ACTIVE', jobTitle: 'Contracting Officer' },
-  { id: 2, code: 'NASA-GSC', name: 'National Aeronautics and Space Administration', address: '300 E Street SW, Washington, D.C.', contact: 'Dr. Sarah Connor', phone: '202-358-0000', email: 's.connor@nasa.gov', status: 'ACTIVE', jobTitle: 'Contracting Specialist' },
-  { id: 3, code: 'DHS-GSC', name: 'Department of Homeland Security', address: '2707 Martin Luther King Jr Ave SE, Washington, D.C.', contact: 'Director Carl Jenkins', phone: '202-282-8000', email: 'c.jenkins@dhs.gov', status: 'ACTIVE', jobTitle: 'Procurement Chief' }
-];
+// Mapper functions to bridge frontend DTO expectation with backend real response fields
 
-const initialEquipment = [
-  { id: 1, code: 'EQ-TAC-01', name: 'Tactical Mobile Communication Hub', manufacturer: 'GSC Systems', hardwareConfig: 'Intel Xeon 16-Core, 64GB RAM, LTE-A Encrypted Transceiver', price: 12500, stock: 15, minStock: 5, status: 'ACTIVE' },
-  { id: 2, code: 'EQ-SVR-02', name: 'Rugged Server Rack Alpha', manufacturer: 'AlphaTech', hardwareConfig: 'Dual AMD EPYC, 256GB RAM, 10TB NVMe RAID-5', price: 24000, stock: 8, minStock: 3, status: 'ACTIVE' },
-  { id: 3, code: 'EQ-THM-03', name: 'Thermal Imaging Scanner', manufacturer: 'Raytheon', hardwareConfig: 'FLIR High-Res Thermal Core, MIL-SPEC Chassis', price: 4800, stock: 22, minStock: 10, status: 'ACTIVE' },
-  { id: 4, code: 'EQ-SAT-04', name: 'Encrypted Satellite Receiver', manufacturer: 'Lockheed', hardwareConfig: 'Ka-Band SATCOM Modem, AES-256 Decryption Engine', price: 8500, stock: 4, minStock: 5, status: 'ACTIVE' }
-];
+const mapAgency = (a) => ({
+  id: a.id,
+  code: a.agencyCode,
+  name: a.name,
+  address: a.address,
+  contact: a.contactName,
+  jobTitle: a.contactPosition,
+  phone: a.contactPhone,
+  email: a.contactEmail,
+  status: a.active ? 'ACTIVE' : 'DISABLED'
+});
 
-const initialContracts = [
-  { 
-    id: 1, 
-    agencyId: 1, 
-    code: 'GSC-FBI-2026', 
-    costLimit: 500000, 
-    spent: 185000, 
-    startDate: '2026-01-01',
-    endDate: '2027-12-31', 
-    allowedEquipment: [1, 2, 3], 
-    status: 'VALID' 
-  },
-  { 
-    id: 2, 
-    agencyId: 2, 
-    code: 'GSC-NASA-2026', 
-    costLimit: 1200000, 
-    spent: 420000, 
-    startDate: '2026-03-15',
-    endDate: '2028-06-30', 
-    allowedEquipment: [2, 4], 
-    status: 'VALID' 
+const mapAgencyRequest = (data) => ({
+  agencyCode: data.code,
+  name: data.name,
+  address: data.address,
+  contactName: data.contact,
+  contactPosition: data.jobTitle,
+  contactPhone: data.phone,
+  contactEmail: data.email
+});
+
+const mapEquipment = (e) => ({
+  id: e.id,
+  code: e.sku,
+  name: e.name,
+  manufacturer: e.manufacturer,
+  hardwareConfig: e.hardwareSpecs,
+  price: Number(e.unitPrice),
+  stock: e.availableStock,
+  minStock: e.minimumStockLevel,
+  status: e.active ? 'ACTIVE' : 'DISABLED'
+});
+
+const mapEquipmentRequest = (data) => ({
+  sku: data.code,
+  name: data.name,
+  manufacturer: data.manufacturer || 'General GSC Vendor',
+  hardwareSpecs: data.hardwareConfig || 'Standard Configuration',
+  unitPrice: Number(data.price),
+  availableStock: Number(data.stock),
+  minimumStockLevel: Number(data.minStock)
+});
+
+const mapContract = (c) => ({
+  id: c.id,
+  agencyId: c.agency ? c.agency.id : null,
+  code: c.contractNumber,
+  costLimit: Number(c.costLimit),
+  spent: 0, // Placeholder, usually computed in backend
+  startDate: c.startDate ? c.startDate.toString() : '',
+  endDate: c.endDate ? c.endDate.toString() : '',
+  allowedEquipment: c.allowedEquipment ? c.allowedEquipment.map(e => e.id) : [],
+  status: c.status === 'VALID' || c.status === 'ACTIVE' ? 'VALID' : 'DISABLED'
+});
+
+const mapContractRequest = (data) => ({
+  contractNumber: data.code,
+  agencyId: Number(data.agencyId),
+  startDate: data.startDate,
+  endDate: data.endDate,
+  costLimit: Number(data.costLimit),
+  allowedEquipmentIds: data.allowedEquipment ? data.allowedEquipment.map(Number) : []
+});
+
+const mapPO = (po) => {
+  const history = [
+    { 
+      timestamp: po.createdAt ? new Date(po.createdAt).toLocaleString() : '', 
+      action: 'DIGITIZED', 
+      user: 'Hệ thống', 
+      comment: 'Đơn đặt hàng được số hoá và lưu trữ trên cơ sở dữ liệu.' 
+    }
+  ];
+
+  if (po.validatedAt) {
+    history.push({ 
+      timestamp: new Date(po.validatedAt).toLocaleString(), 
+      action: po.status === 'INVALID' ? 'REJECTED' : 'COMPLIANCE_AUDITED', 
+      user: 'Officer', 
+      comment: po.validationReason || 'Hoàn thành việc đối soát đơn hàng.' 
+    });
   }
-];
 
-const initialPurchaseOrders = [
-  { 
-    id: 1, 
-    poNumber: 'PO-FBI-889', 
-    contractId: 1, 
-    issueDate: '2026-05-20', 
-    validationReason: 'PO validated and approved for communication systems upgrades.',
-    archiveCode: '',
-    status: 'SHIPPED', 
-    items: [
-      { equipmentId: 1, quantity: 4, catalogPrice: 12500, price: 12500 },
-      { equipmentId: 3, quantity: 5, catalogPrice: 4800, price: 4800 }
-    ], 
-    totalAmount: 74000,
-    validationErrors: [],
-    statusHistory: [
-      { timestamp: '2026-05-20 09:00:00', action: 'DIGITIZED', user: 'Agent John Miller (CO)', comment: 'Purchase Order digitized from secure FBI paper form.' },
-      { timestamp: '2026-05-20 10:15:00', action: 'COMPLIANCE_AUDITED', user: 'Agent John Miller (CO)', comment: 'Compliance checks passed successfully.' },
-      { timestamp: '2026-05-20 13:30:00', action: 'INVENTORY_ALLOCATED', user: 'Sarah Connor (Fulfillment)', comment: 'Stock quantities checked and successfully allocated in Warehouse.' },
-      { timestamp: '2026-05-20 15:45:00', action: 'SHIPPED', user: 'Sarah Connor (Fulfillment)', comment: 'Shipping bill SHP-1 issued. Stock deducted and carrier GSC_CARGO assigned.' }
-    ]
-  },
-  { 
-    id: 2, 
-    poNumber: 'PO-NASA-102', 
-    contractId: 2, 
-    issueDate: '2026-05-22', 
-    validationReason: 'Special approval for customized price points granted by CO.',
-    archiveCode: '',
-    status: 'PENDING', 
-    items: [
-      { equipmentId: 2, quantity: 3, catalogPrice: 24000, price: 23500 }, // customized price override
-      { equipmentId: 4, quantity: 6, catalogPrice: 8500, price: 8500 }
-    ], 
-    totalAmount: 121500,
-    validationErrors: [],
-    statusHistory: [
-      { timestamp: '2026-05-22 14:00:00', action: 'DIGITIZED', user: 'Agent John Miller (CO)', comment: 'Purchase Order digitized with custom catalog price adjustments.' }
-    ]
+  if (po.status === 'SHIPPED') {
+    history.push({ 
+      timestamp: po.updatedAt ? new Date(po.updatedAt).toLocaleString() : '', 
+      action: 'SHIPPED', 
+      user: 'Warehouse', 
+      comment: 'Vận đơn đã được lập, kho xuất hàng thành công.' 
+    });
   }
-];
 
-const initialAuditLogs = [
-  { id: 1, timestamp: '2026-05-25 08:00:00', action: 'CREATE', entity: 'FederalAgency', details: 'Created agency FBI-GSC', user: 'John Miller' },
-  { id: 2, timestamp: '2026-05-25 08:15:00', action: 'CREATE', entity: 'FederalAgency', details: 'Created agency NASA-GSC', user: 'John Miller' },
-  { id: 3, timestamp: '2026-05-25 09:00:00', action: 'CREATE', entity: 'StandingContract', details: 'Issued contract GSC-FBI-2026 (Limit: $500,000)', user: 'John Miller' },
-  { id: 4, timestamp: '2026-05-25 09:30:00', action: 'IMPORT', entity: 'Equipment', details: 'Imported equipment EQ-SAT-04 stock', user: 'Carl Jenkins' }
-];
+  if (po.status === 'CLOSED') {
+    history.push({ 
+      timestamp: po.closedAt ? new Date(po.closedAt).toLocaleString() : '', 
+      action: 'ARCHIVED', 
+      user: 'Hệ thống', 
+      comment: 'Đơn hàng được lưu trữ dài hạn.' 
+    });
+  }
+
+  return {
+    id: po.id,
+    poNumber: po.poNumber,
+    contractId: po.contract ? po.contract.id : null,
+    issueDate: po.issueDate ? po.issueDate.toString() : '',
+    validationReason: po.validationReason || '',
+    archiveCode: po.archiveCode || '',
+    status: po.status,
+    items: po.items ? po.items.map(item => ({
+      equipmentId: item.equipment ? item.equipment.id : null,
+      quantity: item.quantity,
+      catalogPrice: item.unitPrice ? Number(item.unitPrice) : 0,
+      price: item.unitPrice ? Number(item.unitPrice) : 0
+    })) : [],
+    totalAmount: Number(po.totalAmount),
+    validationErrors: po.status === 'INVALID' ? [po.validationReason] : [],
+    statusHistory: history
+  };
+};
+
+const mapExceptionReport = (r) => ({
+  id: r.id,
+  reportNumber: r.reportNumber,
+  poId: r.purchaseOrderId,
+  poNumber: r.poNumber,
+  reportedAt: r.reportedAt ? new Date(r.reportedAt).toLocaleString() : new Date(r.createdAt).toLocaleString(),
+  reportedBy: r.reportedBy || 'SYSTEM',
+  note: r.note || '',
+  shortages: r.items ? r.items.map(item => ({
+    equipmentId: item.equipment ? item.equipment.id : null,
+    code: item.equipment ? item.equipment.sku : '',
+    name: item.equipment ? item.equipment.name : '',
+    requested: item.requestedQuantity,
+    available: item.availableQuantity,
+    shortage: item.shortageQuantity
+  })) : []
+});
+
+const mapRejectionLetter = (l) => ({
+  id: l.id,
+  letterNumber: l.letterNumber,
+  poId: l.purchaseOrderId,
+  poNumber: l.poNumber,
+  agencyName: l.agency ? l.agency.name : 'Unknown Agency',
+  agencyEmail: l.agency ? l.agency.contactEmail : '',
+  issueDate: l.issuedAt ? new Date(l.issuedAt).toISOString().slice(0, 10) : new Date(l.createdAt).toISOString().slice(0, 10),
+  reason: l.reason || '',
+  createdBy: l.issuedBy || 'SYSTEM',
+  status: l.status // DRAFT / SENT
+});
+
+const mapBackup = (b) => ({
+  id: b.id,
+  fileName: b.fileName,
+  filePath: b.filePath,
+  timestamp: b.completedAt ? new Date(b.completedAt).toLocaleString() : new Date(b.createdAt).toLocaleString(),
+  type: b.type,
+  status: b.status,
+  checksum: b.checksum || 'N/A'
+});
 
 export function AppDataProvider({ children }) {
   const { currentUser, authToken } = useAuth();
 
-  const [agencies, setAgencies] = useState(initialAgencies);
-  const [equipment, setEquipment] = useState(initialEquipment);
-  const [contracts, setContracts] = useState(initialContracts);
-  const [purchaseOrders, setPurchaseOrders] = useState(initialPurchaseOrders);
-  const [auditLogs, setAuditLogs] = useState(() => {
-    const saved = localStorage.getItem('gsc-audit-logs');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse audit logs from localStorage', e);
-      }
-    }
-    return initialAuditLogs;
-  });
+  const [agencies, setAgencies] = useState([]);
+  const [equipment, setEquipment] = useState([]);
+  const [contracts, setContracts] = useState([]);
+  const [purchaseOrders, setPurchaseOrders] = useState([]);
+  const [auditLogs, setAuditLogs] = useState([]);
   const [exceptionReports, setExceptionReports] = useState([]);
   const [shippingBills, setShippingBills] = useState([]);
   const [rejectionLetters, setRejectionLetters] = useState([]);
   const [backups, setBackups] = useState([]);
 
-  // Fetch audit logs from backend database
-  useEffect(() => {
-    if (authToken) {
-      fetch('/api/audit-logs', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`
-        }
-      })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to fetch audit logs');
-        return res.json();
-      })
+  const loadAllData = () => {
+    if (!authToken) return;
+
+    // Load Agencies
+    api.get('/api/agencies?size=100')
       .then(body => {
-        if (body && body.data) {
-          const mappedLogs = body.data.map(log => ({
-            id: log.id,
-            timestamp: new Date(log.occurredAt).toISOString().slice(0, 19).replace('T', ' '),
-            action: log.action,
-            entity: log.entityName,
-            details: log.detail,
-            user: log.actorName
-          }));
-          setAuditLogs(mappedLogs);
+        if (body && body.data && body.data.content) {
+          setAgencies(body.data.content.map(mapAgency));
         }
-      })
-      .catch(err => {
-        console.error('Failed to load audit logs from database', err);
-      });
+      }).catch(err => console.error('Failed to load agencies', err));
+
+    // Load Equipment
+    api.get('/api/equipment?size=100')
+      .then(body => {
+        if (body && body.data && body.data.content) {
+          setEquipment(body.data.content.map(mapEquipment));
+        }
+      }).catch(err => console.error('Failed to load equipment', err));
+
+    // Load Contracts
+    api.get('/api/contracts?size=100')
+      .then(body => {
+        if (body && body.data && body.data.content) {
+          setContracts(body.data.content.map(mapContract));
+        }
+      }).catch(err => console.error('Failed to load contracts', err));
+
+    // Load Purchase Orders
+    api.get('/api/purchase-orders?size=100')
+      .then(body => {
+        if (body && body.data && body.data.content) {
+          setPurchaseOrders(body.data.content.map(mapPO));
+        }
+      }).catch(err => console.error('Failed to load purchase orders', err));
+
+    // Load Audit Logs & Backups (restricted to SYSTEM_ADMIN)
+    if (currentUser && currentUser.role === 'SYSTEM_ADMIN') {
+      api.get('/api/audit-logs?size=100')
+        .then(body => {
+          if (body && body.data && body.data.content) {
+            setAuditLogs(body.data.content.map(log => ({
+              id: log.id,
+              timestamp: log.occurredAt ? new Date(log.occurredAt).toLocaleString() : '',
+              action: log.action,
+              entity: log.entityName,
+              details: log.detail,
+              user: log.actorName || 'SYSTEM'
+            })));
+          }
+        }).catch(err => console.error('Failed to load audit logs', err));
+
+      api.get('/api/backups?size=100')
+        .then(body => {
+          if (body && body.data && body.data.content) {
+            setBackups(body.data.content.map(mapBackup));
+          }
+        }).catch(err => console.error('Failed to load backups', err));
     }
-  }, [authToken]);
+
+    // Load Exception Reports
+    api.get('/api/exception-reports?size=100')
+      .then(body => {
+        if (body && body.data && body.data.content) {
+          setExceptionReports(body.data.content.map(mapExceptionReport));
+        }
+      }).catch(err => console.error('Failed to load exception reports', err));
+
+    // Load Shipping Bills
+    api.get('/api/shipping-bills?size=100')
+      .then(body => {
+        if (body && body.data && body.data.content) {
+          setShippingBills(body.data.content.map(bill => ({
+            id: bill.id,
+            shippingBillNumber: bill.shippingBillNumber,
+            poId: bill.purchaseOrderId,
+            poNumber: bill.poNumber,
+            shippingDate: bill.shippingDate ? bill.shippingDate.toString() : '',
+            items: bill.items ? bill.items.map(item => ({
+              equipmentId: item.equipment ? item.equipment.id : null,
+              quantity: item.shippedQuantity
+            })) : [],
+            status: bill.status,
+            destinationAddress: bill.destinationAddress || '',
+            createdBy: bill.performedBy || 'SYSTEM'
+          })));
+        }
+      }).catch(err => console.error('Failed to load shipping bills', err));
+
+    // Load Rejection Letters
+    api.get('/api/rejection-letters?size=100')
+      .then(body => {
+        if (body && body.data && body.data.content) {
+          setRejectionLetters(body.data.content.map(mapRejectionLetter));
+        }
+      }).catch(err => console.error('Failed to load rejection letters', err));
+  };
 
   useEffect(() => {
-    localStorage.setItem('gsc-audit-logs', JSON.stringify(auditLogs));
-  }, [auditLogs]);
+    loadAllData();
+  }, [authToken, currentUser]);
 
   const addAuditLog = (action, entity, details) => {
-    const newLog = {
-      id: Date.now(),
-      timestamp: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      action,
-      entity,
-      details,
-      user: currentUser ? currentUser.name : 'SYSTEM'
-    };
-    setAuditLogs(prev => [newLog, ...prev]);
+    // No-op on frontend: Backend handles auditing triggers in Services natively!
+    console.log(`[AuditLog Sim]: ${action} on ${entity} -> ${details}`);
+  };
 
-    if (authToken) {
-      fetch('/api/audit-logs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${authToken}`
-        },
-        body: JSON.stringify({
-          action,
-          entityName: entity,
-          detail: details
-        })
-      })
-      .catch(err => {
-        console.error('Failed to sync new audit log with backend', err);
-      });
+  const handleCreateAgency = async (agencyData) => {
+    const res = await api.post('/api/agencies', mapAgencyRequest(agencyData));
+    loadAllData();
+    return mapAgency(res.data);
+  };
+
+  const handleUpdateAgency = async (id, data) => {
+    await api.put(`/api/agencies/${id}`, mapAgencyRequest(data));
+    loadAllData();
+  };
+
+  const handleDeleteAgency = async (id) => {
+    // Backend doesn't support hard delete, we disable instead
+    await api.patch(`/api/agencies/${id}/disable`);
+    loadAllData();
+  };
+
+  const toggleAgencyStatus = async (id) => {
+    const target = agencies.find(a => a.id === id);
+    if (target) {
+      if (target.status === 'ACTIVE') {
+        await api.patch(`/api/agencies/${id}/disable`);
+      } else {
+        await api.patch(`/api/agencies/${id}/enable`);
+      }
+      loadAllData();
     }
   };
 
-  const handleCreateAgency = (agencyData) => {
-    const created = {
-      id: Date.now(),
-      ...agencyData,
-      status: 'ACTIVE'
-    };
-    setAgencies(prev => [...prev, created]);
-    addAuditLog('CREATE', 'FederalAgency', `Created agency ${created.code} (${created.name})`);
-    return created;
+  const handleCreateContract = async (contractData) => {
+    const res = await api.post('/api/contracts', mapContractRequest(contractData));
+    loadAllData();
+    return mapContract(res.data);
   };
 
-  const toggleAgencyStatus = (id) => {
-    setAgencies(prev => prev.map(a => {
-      if (a.id === id) {
-        const nextStatus = a.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
-        addAuditLog(nextStatus === 'ACTIVE' ? 'ENABLE' : 'DISABLE', 'FederalAgency', `Status updated to ${nextStatus} for agency ${a.code}`);
-        return { ...a, status: nextStatus };
-      }
-      return a;
-    }));
+  const handleUpdateContract = async (id, data) => {
+    await api.put(`/api/contracts/${id}`, mapContractRequest(data));
+    loadAllData();
   };
 
-  const handleCreateContract = (contractData) => {
-    const created = {
-      id: Date.now(),
-      agencyId: parseInt(contractData.agencyId),
-      code: contractData.code,
-      costLimit: parseFloat(contractData.costLimit),
-      spent: 0,
-      startDate: contractData.startDate || new Date().toISOString().slice(0, 10),
-      endDate: contractData.endDate || '2027-12-31',
-      allowedEquipment: contractData.allowedEquipment.map(id => parseInt(id)),
-      status: 'VALID'
-    };
-    setContracts(prev => [...prev, created]);
-    addAuditLog('CREATE', 'StandingContract', `Contract ${created.code} registered for agency ID ${created.agencyId}`);
-    return created;
+  const handleDeleteContract = async (id) => {
+    await api.patch(`/api/contracts/${id}/disable`);
+    loadAllData();
   };
 
-  const handleStockAdjustment = (adjustment) => {
+  const toggleContractStatus = async (id) => {
+    await api.patch(`/api/contracts/${id}/disable`);
+    loadAllData();
+  };
+
+  const handleStockAdjustment = async (adjustment) => {
     const { equipmentId, quantity, operation, note } = adjustment;
-    const eqId = parseInt(equipmentId);
-    const qty = parseInt(quantity);
-
-    setEquipment(prev => prev.map(eq => {
-      if (eq.id === eqId) {
-        const delta = operation === 'INCREASE' ? qty : -qty;
-        const newStock = Math.max(0, eq.stock + delta);
-        addAuditLog('UPDATE_STOCK', 'Equipment', `Stock for ${eq.code} updated: ${eq.stock} -> ${newStock} (${operation}). Note: ${note || 'N/A'}`);
-        return { ...eq, stock: newStock };
-      }
-      return eq;
-    }));
+    await api.patch(`/api/equipment/${equipmentId}/stock`, {
+      quantity: Number(quantity),
+      operation,
+      note: note || ''
+    });
+    loadAllData();
   };
 
-  const handleCreatePo = (poData) => {
-    const contractId = parseInt(poData.contractId);
-    let totalAmount = 0;
-    
-    const items = poData.items.map(item => {
-      const eqId = parseInt(item.equipmentId);
-      const qty = parseInt(item.quantity);
-      const eq = equipment.find(e => e.id === eqId);
-      
-      // Support custom overrides of prices
-      const price = item.customPrice ? parseFloat(item.customPrice) : (eq ? eq.price : 0);
-      totalAmount += price * qty;
-      
-      return { 
-        equipmentId: eqId, 
-        quantity: qty, 
-        catalogPrice: eq ? eq.price : 0, 
-        price 
-      };
-    });
-
-    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const username = currentUser ? currentUser.name : 'SYSTEM';
-
-    const created = {
-      id: Date.now(),
+  const handleCreatePo = async (poData) => {
+    const requestBody = {
       poNumber: poData.poNumber,
-      contractId,
+      contractId: Number(poData.contractId),
       issueDate: poData.issueDate || new Date().toISOString().slice(0, 10),
-      validationReason: poData.validationReason || '',
-      archiveCode: '',
-      status: 'PENDING',
-      items,
-      totalAmount,
-      validationErrors: [],
-      statusHistory: [
-        { timestamp, action: 'DIGITIZED', user: username, comment: 'Purchase order digitized from paper and metadata values saved.' }
-      ]
+      items: poData.items.map(item => ({
+        equipmentId: Number(item.equipmentId),
+        quantity: Number(item.quantity)
+      }))
     };
-
-    setPurchaseOrders(prev => [created, ...prev]);
-    addAuditLog('CREATE', 'PurchaseOrder', `Purchase Order ${created.poNumber} digitized ($${created.totalAmount.toLocaleString()})`);
-    return created;
+    const res = await api.post('/api/purchase-orders', requestBody);
+    loadAllData();
+    return mapPO(res.data);
   };
 
-  const handleUpdatePo = (id, data) => {
-    let totalAmount = 0;
-    const items = data.items.map(item => {
-      const eqId = parseInt(item.equipmentId);
-      const qty = parseInt(item.quantity);
-      const eq = equipment.find(e => e.id === eqId);
-      
-      const price = item.customPrice ? parseFloat(item.customPrice) : (eq ? eq.price : 0);
-      totalAmount += price * qty;
-      
-      return { 
-        equipmentId: eqId, 
-        quantity: qty, 
-        catalogPrice: eq ? eq.price : 0, 
-        price 
-      };
+  const handleUpdatePo = async (id, data) => {
+    await api.put(`/api/purchase-orders/${id}`, {
+      poNumber: data.poNumber,
+      contractId: Number(data.contractId),
+      issueDate: data.issueDate,
+      items: data.items.map(item => ({
+        equipmentId: Number(item.equipmentId),
+        quantity: Number(item.quantity)
+      }))
     });
-
-    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const username = currentUser ? currentUser.name : 'SYSTEM';
-
-    setPurchaseOrders(prev => prev.map(po => {
-      if (po.id === id) {
-        const updatedHistory = [
-          ...po.statusHistory,
-          { timestamp, action: 'MODIFIED', user: username, comment: 'Officer adjusted order metadata parameters or customized line item pricing.' }
-        ];
-
-        return { 
-          ...po, 
-          poNumber: data.poNumber, 
-          contractId: parseInt(data.contractId), 
-          issueDate: data.issueDate,
-          validationReason: data.validationReason || po.validationReason,
-          archiveCode: po.archiveCode,
-          items,
-          totalAmount,
-          status: 'PENDING',
-          validationErrors: [],
-          statusHistory: updatedHistory
-        };
-      }
-      return po;
-    }));
-
-    addAuditLog('UPDATE', 'PurchaseOrder', `Updated purchase order specifications for ID: ${id}`);
+    loadAllData();
   };
 
-  const validatePurchaseOrder = (poId) => {
-    setPurchaseOrders(prev => prev.map(po => {
-      if (po.id === poId) {
-        const contract = contracts.find(c => c.id === po.contractId);
-        const errors = [];
-
-        if (!contract) {
-          errors.push('Assigned contract does not exist.');
-        } else {
-          if (contract.status !== 'VALID') {
-            errors.push(`Contract ${contract.code} is status: ${contract.status}.`);
-          }
-          const today = new Date().toISOString().slice(0, 10);
-          if (contract.endDate < today) {
-            errors.push(`Contract ${contract.code} expired on ${contract.endDate}.`);
-          }
-
-          po.items.forEach(item => {
-            if (!contract.allowedEquipment.includes(item.equipmentId)) {
-              const eq = equipment.find(e => e.id === item.equipmentId);
-              errors.push(`Equipment ${eq ? eq.code : '#' + item.equipmentId} is not in contract whitelist.`);
-            }
-          });
-
-          const projectedTotal = contract.spent + po.totalAmount;
-          if (projectedTotal > contract.costLimit) {
-            errors.push(`PO amount ($${po.totalAmount.toLocaleString()}) combined with contract spent ($${contract.spent.toLocaleString()}) exceeds cost limit ($${contract.costLimit.toLocaleString()}).`);
-          }
-        }
-
-        const isValid = errors.length === 0;
-        const nextStatus = isValid ? 'OUTSTANDING' : 'INVALID';
-        
-        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        const username = currentUser ? currentUser.name : 'SYSTEM';
-        const updatedHistory = [
-          ...po.statusHistory,
-          { 
-            timestamp, 
-            action: 'COMPLIANCE_AUDITED', 
-            user: username, 
-            comment: isValid 
-              ? 'Passed whitelists budget and catalog allowed items verification checks.' 
-              : `Compliance check failed: ${errors.join('; ')}`
-          }
-        ];
-
-        addAuditLog('VALIDATE_PO', 'PurchaseOrder', `Validated PO ${po.poNumber} -> ${nextStatus}. Errors: ${errors.length}`);
-        
-        return {
-          ...po,
-          status: nextStatus,
-          validationErrors: errors,
-          statusHistory: updatedHistory
-        };
-      }
-      return po;
-    }));
+  const validatePurchaseOrder = async (poId) => {
+    await api.post(`/api/purchase-orders/${poId}/validate`);
+    loadAllData();
   };
 
-  const generateRejectionLetter = (po) => {
-    const letterId = Date.now();
-    const contract = contracts.find(c => c.id === po.contractId);
-    const agency = contract ? agencies.find(a => a.id === contract.agencyId) : null;
-
-    const letter = {
-      id: Date.now(),
-      letterNumber: 'REJ-' + po.poNumber + '-' + Date.now().toString().slice(-4),
-      poId: po.id,
-      poNumber: po.poNumber,
-      agencyName: agency ? agency.name : 'Unknown Agency',
-      agencyEmail: agency ? agency.contactEmail : 'unknown@agency.gov',
-      issueDate: new Date().toISOString().slice(0, 10),
-      reason: po.validationReason || 'Non-compliance violations detected.',
-      reasons: po.validationErrors || [],
-      createdBy: currentUser ? currentUser.name : 'SYSTEM',
-      status: 'DRAFT'
-    };// Update status history
-    setPurchaseOrders(prev => prev.map(o => {
-      if (o.id === po.id) {
-        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        return {
-          ...o,
-          statusHistory: [
-            ...o.statusHistory,
-            { timestamp, action: 'REJECTION_GENERATED', user: currentUser ? currentUser.name : 'SYSTEM', comment: 'Complied rejection letter issued to draft status due to whitelists violations.' }
-          ]
-        };
-      }
-      return o;
-    }));
-
-    setRejectionLetters(prev => [newLetter, ...prev]);
-    addAuditLog('ISSUE_REJECTION_LETTER', 'RejectionLetter', `Generated draft rejection letter for PO ${po.poNumber}`);
-    return newLetter;
+  const generateRejectionLetter = async (po) => {
+    const res = await api.post(`/api/purchase-orders/${po.id}/rejection-letter`);
+    loadAllData();
+    return mapRejectionLetter(res.data);
   };
 
-  const handleSendRejectionLetter = (letterId) => {
-    setRejectionLetters(prev => prev.map(letter => {
-      if (letter.id === letterId) {
-        // Update purchase order status to REJECTED
-        setPurchaseOrders(prevPOs => prevPOs.map(o => {
-          if (o.id === letter.poId) {
-            const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-            return {
-              ...o,
-              status: 'REJECTED',
-              statusHistory: [
-                ...o.statusHistory,
-                { timestamp, action: 'REJECTED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Official Rejection Letter sent and emailed to partner agency: ${letter.agencyEmail}.` }
-              ]
-            };
-          }
-          return o;
-        }));
-
-        addAuditLog('ISSUE_REJECTION_LETTER', 'RejectionLetter', `Issued and sent Rejection Letter for PO ${letter.poNumber} to ${letter.agencyEmail}`);
-        return { ...letter, status: 'ISSUED' };
-      }
-      return letter;
-    }));
+  const handleSendRejectionLetter = async (letterId) => {
+    await api.patch(`/api/rejection-letters/${letterId}/issue`);
+    loadAllData();
   };
 
-  const handleInventoryCheck = (po) => {
-    const shortages = [];
-    po.items.forEach(item => {
-      const eq = equipment.find(e => e.id === item.equipmentId);
-      if (eq) {
-        if (eq.stock < item.quantity) {
-          shortages.push({
-            equipmentId: item.equipmentId,
-            code: eq.code,
-            name: eq.name,
-            requested: item.quantity,
-            available: eq.stock,
-            shortage: item.quantity - eq.stock
-          });
-        }
-      }
-    });
+  const handleInventoryCheck = async (po) => {
+    const response = await api.post(`/api/purchase-orders/${po.id}/inventory-check`);
+    const shortages = response.items ? response.items.filter(item => !item.sufficient).map(item => ({
+      equipmentId: item.equipment.id,
+      code: item.equipment.sku,
+      name: item.equipment.name,
+      requested: item.requestedQuantity,
+      available: item.availableQuantity,
+      shortage: item.shortageQuantity
+    })) : [];
 
-    const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-    const username = currentUser ? currentUser.name : 'SYSTEM';
-
-    if (shortages.length > 0) {
-      setPurchaseOrders(prev => prev.map(o => {
-        if (o.id === po.id) {
-          return {
-            ...o,
-            statusHistory: [
-              ...o.statusHistory,
-              { timestamp, action: 'SHORTAGE_FLAGGED', user: username, comment: `Stock checks failed. Quantity deficits detected on ${shortages.length} items.` }
-            ]
-          };
-        }
-        return o;
-      }));
-      return { shortages, success: false };
-    } else {
-      setPurchaseOrders(prev => prev.map(o => {
-        if (o.id === po.id) {
-          addAuditLog('INVENTORY_CHECK', 'PurchaseOrder', `Inventory check cleared for PO ${po.poNumber}. Stock is sufficient.`);
-          return { 
-            ...o, 
-            status: 'READY_TO_SHIP',
-            statusHistory: [
-              ...o.statusHistory,
-              { timestamp, action: 'INVENTORY_ALLOCATED', user: username, comment: 'Stock quantities checked. Necessary stock is allocated and held successfully.' }
-            ]
-          };
-        }
-        return o;
-      }));
-      return { shortages: [], success: true };
-    }
-  };
-
-  const handleConfirmExceptionReport = (po, shortages) => {
-    const report = {
-      id: Date.now(),
-      reportNumber: 'EXP-' + Date.now().toString().slice(-6),
-      poId: po.id,
-      poNumber: po.poNumber,
-      reportedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      reportedBy: currentUser ? currentUser.name : 'SYSTEM',
-      note: 'Critical warehouse shortage. Stock allocation failed.',
-      shortages,
-    };
-
-    setExceptionReports(prev => [report, ...prev]);
-    
-    setPurchaseOrders(prev => prev.map(o => {
-      if (o.id === po.id) {
-        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        addAuditLog('CREATE_EXCEPTION_REPORT', 'ExceptionReport', `Exception report generated for PO ${o.poNumber} (Missing items: ${shortages.length})`);
-        return { 
-          ...o, 
-          status: 'INVENTORY_CHECKED',
-          statusHistory: [
-            ...o.statusHistory,
-            { timestamp, action: 'EXCEPTION_REPORTED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Deficit exception report EXP-${report.id} registered for procurement.` }
-          ]
-        };
-      }
-      return o;
-    }));
-  };
-
-  const handleConfirmShipping = (po) => {
-    let hasStockIssue = false;
-    po.items.forEach(item => {
-      const eq = equipment.find(eq => eq.id === item.equipmentId);
-      if (!eq || eq.stock < item.quantity) {
-        hasStockIssue = true;
-      }
-    });
-
-    if (hasStockIssue) {
-      return false;
+    if (response.allItemsAvailable) {
+      await api.patch(`/api/purchase-orders/${po.id}/confirm-inventory-check`);
     }
 
-    setEquipment(prev => prev.map(eq => {
-      const item = po.items.find(i => i.equipmentId === eq.id);
-      if (item) {
-        return { ...eq, stock: eq.stock - item.quantity };
-      }
-      return eq;
-    }));
+    loadAllData();
+    return { shortages, success: response.allItemsAvailable };
+  };
 
-    setContracts(prev => prev.map(c => {
-      if (c.id === po.contractId) {
-        return { ...c, spent: c.spent + po.totalAmount };
-      }
-      return c;
-    }));
+  const handleConfirmExceptionReport = async (po, shortages) => {
+    await api.post(`/api/purchase-orders/${po.id}/exception-report`);
+    loadAllData();
+  };
 
-    const trackingNumber = 'GSC-TRK-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-    const billId = Date.now();
-
-    const contract = contracts.find(c => c.id === po.contractId);
-    const agency = contract ? agencies.find(a => a.id === contract.agencyId) : null;
-    const destinationAddress = agency ? agency.address : 'Unknown Address';
-
-    const bill = {
-      id: billId,
-      shippingBillNumber: 'SHP-' + billId,
-      poId: po.id,
-      poNumber: po.poNumber,
+  const handleConfirmShipping = async (po) => {
+    const requestBody = {
       shippingDate: new Date().toISOString().slice(0, 10),
-      items: po.items,
-      status: 'DELIVERED',
-      destinationAddress,
-      createdBy: currentUser ? currentUser.name : 'SYSTEM'
+      destinationAddress: po.destinationAddress || 'Địa chỉ Cơ quan Đối tác',
+      items: po.items.map(item => ({
+        equipmentId: Number(item.equipmentId),
+        shippedQuantity: Number(item.quantity)
+      }))
     };
-
-    setShippingBills(prev => [bill, ...prev]);
-
-    setPurchaseOrders(prev => prev.map(o => {
-      if (o.id === po.id) {
-        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        addAuditLog('ISSUE_SHIPPING_BILL', 'ShippingBill', `Shipping bill issued and inventory deducted for PO ${o.poNumber}`);
-        return { 
-          ...o, 
-          status: 'SHIPPED', 
-          statusHistory: [
-            ...o.statusHistory,
-            { timestamp, action: 'SHIPPED', user: currentUser ? currentUser.name : 'SYSTEM', comment: `Secure Shipping Bill SHP-${billId} issued. Stock deducted.` }
-          ]
-        };
-      }
-      return o;
-    }));
-
+    await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
+    loadAllData();
     return true;
   };
 
-  const closeAndArchivePo = (poId) => {
-    setPurchaseOrders(prev => prev.map(po => {
-      if (po.id === poId) {
-        const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
-        addAuditLog('CLOSE_PURCHASE_ORDER', 'PurchaseOrder', `Purchase Order ${po.poNumber} closed and archived under code ARC-${po.id}`);
-        return { 
-          ...po, 
-          status: 'CLOSED',
-          statusHistory: [
-            ...po.statusHistory,
-            { timestamp, action: 'ARCHIVED', user: currentUser ? currentUser.name : 'SYSTEM', comment: 'Purchase order closed and stored under long-term system archive logs.' }
-          ]
-        };
-      }
-      return po;
-    }));
+  const closeAndArchivePo = async (poId) => {
+    await api.post(`/api/purchase-orders/${poId}/close`);
+    loadAllData();
   };
 
-  const triggerDatabaseBackup = () => {
-    const timestamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-    const fileName = `gsc-order-manager_${timestamp}.sql`;
-    
-    const backupRecord = {
-      id: Date.now(),
-      fileName,
-      filePath: `D:/gsc-order-manager-backups/${fileName}`,
-      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 19),
-      type: 'FULL',
-      status: 'COMPLETED',
-      checksum: 'SHA256-BAK:' + Math.random().toString(36).substring(2, 10).toUpperCase(),
-      snapshot: {
-        agencies: [...agencies],
-        equipment: [...equipment],
-        contracts: [...contracts],
-        purchaseOrders: [...purchaseOrders],
-        exceptionReports: [...exceptionReports],
-        shippingBills: [...shippingBills],
-        rejectionLetters: [...rejectionLetters]
-      }
-    };
-
-    setBackups(prev => [backupRecord, ...prev]);
-    addAuditLog('BACKUP', 'SystemSettings', `Database backup written to file path ${backupRecord.filePath}`);
-    return backupRecord.filePath;
+  const triggerDatabaseBackup = async () => {
+    const res = await api.post('/api/backups', { type: 'FULL' });
+    loadAllData();
+    return res.data ? res.data.filePath : '';
   };
 
-  const triggerDatabaseRestore = (backup) => {
-    const snap = backup.snapshot;
-    setAgencies(snap.agencies);
-    setEquipment(snap.equipment);
-    setContracts(snap.contracts);
-    setPurchaseOrders(snap.purchaseOrders);
-    setExceptionReports(snap.exceptionReports);
-    setShippingBills(snap.shippingBills);
-    setRejectionLetters(snap.rejectionLetters);
-
-    addAuditLog('RESTORE', 'SystemSettings', `Database successfully restored from backup file ${backup.fileName}`);
+  const triggerDatabaseRestore = async (backup) => {
+    await api.post(`/api/backups/${backup.id}/restore`, { note: 'Khôi phục từ Frontend UI', confirmed: true });
+    loadAllData();
   };
 
-  const handleUpdateAgency = (id, data) => {
-    setAgencies(prev => prev.map(a => a.id === id ? { ...a, ...data } : a));
-    addAuditLog('UPDATE', 'FederalAgency', `Updated agency profile details for ID: ${id}`);
+  const handleCreateEquipment = async (data) => {
+    const res = await api.post('/api/equipment', mapEquipmentRequest(data));
+    loadAllData();
+    return mapEquipment(res.data);
   };
 
-  const handleDeleteAgency = (id) => {
-    setAgencies(prev => prev.filter(a => a.id !== id));
-    addAuditLog('DELETE', 'FederalAgency', `Deleted agency profile for ID: ${id}`);
+  const handleUpdateEquipment = async (id, data) => {
+    await api.put(`/api/equipment/${id}`, mapEquipmentRequest(data));
+    loadAllData();
   };
 
-  const handleUpdateContract = (id, data) => {
-    setContracts(prev => prev.map(c => c.id === id ? { 
-      ...c, 
-      code: data.code,
-      agencyId: parseInt(data.agencyId),
-      costLimit: parseFloat(data.costLimit),
-      startDate: data.startDate,
-      endDate: data.endDate,
-      allowedEquipment: data.allowedEquipment.map(Number)
-    } : c));
-    addAuditLog('UPDATE', 'StandingContract', `Updated standing contract parameters for ID: ${id}`);
+  const handleDeleteEquipment = async (id) => {
+    await api.patch(`/api/equipment/${id}/disable`);
+    loadAllData();
   };
 
-  const handleDeleteContract = (id) => {
-    setContracts(prev => prev.filter(c => c.id !== id));
-    addAuditLog('DELETE', 'StandingContract', `Deleted standing contract registry for ID: ${id}`);
-  };
-
-  const toggleContractStatus = (id) => {
-    setContracts(prev => prev.map(c => {
-      if (c.id === id) {
-        const nextStatus = c.status === 'VALID' ? 'DISABLED' : 'VALID';
-        addAuditLog(nextStatus === 'VALID' ? 'ENABLE' : 'DISABLE', 'StandingContract', `Status updated to ${nextStatus} for contract ${c.code}`);
-        return { ...c, status: nextStatus };
-      }
-      return c;
-    }));
-  };
-
-  const handleCreateEquipment = (data) => {
-    const created = {
-      id: Date.now(),
-      code: data.code,
-      name: data.name,
-      manufacturer: data.manufacturer || 'General GSC Vendor',
-      hardwareConfig: data.hardwareConfig || 'Standard Configuration',
-      price: parseFloat(data.price),
-      stock: parseInt(data.stock),
-      minStock: parseInt(data.minStock),
-      status: 'ACTIVE'
-    };
-    setEquipment(prev => [...prev, created]);
-    addAuditLog('CREATE', 'Equipment', `Created catalog equipment: ${created.code}`);
-    return created;
-  };
-
-  const handleUpdateEquipment = (id, data) => {
-    setEquipment(prev => prev.map(e => e.id === id ? { 
-      ...e, 
-      code: data.code,
-      name: data.name,
-      manufacturer: data.manufacturer || e.manufacturer || 'General GSC Vendor',
-      hardwareConfig: data.hardwareConfig || e.hardwareConfig || 'Standard Configuration',
-      price: parseFloat(data.price), 
-      stock: parseInt(data.stock), 
-      minStock: parseInt(data.minStock) 
-    } : e));
-    addAuditLog('UPDATE', 'Equipment', `Updated equipment catalog specifications for ID: ${id}`);
-  };
-
-  const handleDeleteEquipment = (id) => {
-    setEquipment(prev => prev.filter(e => e.id !== id));
-    addAuditLog('DELETE', 'Equipment', `Deleted equipment catalog item for ID: ${id}`);
-  };
-
-  const handleDeletePo = (id) => {
-    setPurchaseOrders(prev => prev.filter(po => po.id !== id));
-    addAuditLog('DELETE', 'PurchaseOrder', `Deleted purchase order digitization for ID: ${id}`);
+  const handleDeletePo = async (id) => {
+    console.warn('Backend không hỗ trợ xoá đơn đặt hàng!');
   };
 
   return (

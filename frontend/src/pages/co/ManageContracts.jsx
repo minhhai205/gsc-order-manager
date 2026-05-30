@@ -64,7 +64,7 @@ export default function ManageContracts() {
     setShowDeleteConfirm(true);
   };
 
-  const onCreateSubmit = (e) => {
+  const onCreateSubmit = async (e) => {
     e.preventDefault();
     if (!formData.agencyId || !formData.code || !formData.costLimit) {
       triggerAlert('danger', 'Error: All creation fields are required.');
@@ -75,12 +75,16 @@ export default function ManageContracts() {
       triggerAlert('danger', 'Error: Budget Cap must be a positive number greater than zero.');
       return;
     }
-    handleCreateContract(formData);
-    setShowCreateModal(false);
-    triggerAlert('success', `Standing Contract ${formData.code} was issued successfully!`);
+    try {
+      await handleCreateContract(formData);
+      setShowCreateModal(false);
+      triggerAlert('success', `Standing Contract ${formData.code} was issued successfully!`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to issue contract: ${err.message}`);
+    }
   };
 
-  const onEditSubmit = (e) => {
+  const onEditSubmit = async (e) => {
     e.preventDefault();
     if (!selectedContract || !formData.costLimit) {
       triggerAlert('danger', 'Error: Cost Limit is required.');
@@ -91,17 +95,25 @@ export default function ManageContracts() {
       triggerAlert('danger', 'Error: Budget Cap must be a positive number greater than zero.');
       return;
     }
-    handleUpdateContract(selectedContract.id, formData);
-    setShowEditModal(false);
-    triggerAlert('success', `Standing Contract ${formData.code} was successfully updated.`);
+    try {
+      await handleUpdateContract(selectedContract.id, formData);
+      setShowEditModal(false);
+      triggerAlert('success', `Standing Contract ${formData.code} was successfully updated.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to update contract: ${err.message}`);
+    }
   };
 
-  const onDeleteConfirm = () => {
+  const onDeleteConfirm = async () => {
     if (!selectedContract) return;
     const code = selectedContract.code;
-    handleDeleteContract(selectedContract.id);
-    setShowDeleteConfirm(false);
-    triggerAlert('success', `Standing Contract ${code} has been annulled and deleted.`);
+    try {
+      await handleDeleteContract(selectedContract.id);
+      setShowDeleteConfirm(false);
+      triggerAlert('success', `Standing Contract ${code} has been annulled and deleted.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to delete contract: ${err.message}`);
+    }
   };
 
   const toggleEquipmentInWhitelist = (eqId, isEdit = false) => {

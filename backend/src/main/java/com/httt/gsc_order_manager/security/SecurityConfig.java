@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(accessDeniedHandler)
             )
             .authorizeHttpRequests(authorize -> authorize
-                .requestMatchers("/api/auth/login", "/api/auth/refresh-token").permitAll()
+                .requestMatchers("/api/auth/login", "/api/auth/refresh-token", "/api/auth/register").permitAll()
                 .requestMatchers("/api/health").permitAll()
                 .requestMatchers("/api/users/**", "/api/audit-logs/**", "/api/backups/**", "/api/restores/**")
                     .hasRole("SYSTEM_ADMIN")

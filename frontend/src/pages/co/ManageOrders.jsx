@@ -113,51 +113,72 @@ export default function ManageOrders() {
     }));
   };
 
-  const onCreateSubmit = (e) => {
+  const onCreateSubmit = async (e) => {
     e.preventDefault();
     if (!formData.poNumber || !formData.contractId || formData.items.some(item => !item.equipmentId || !item.quantity)) {
       triggerAlert('danger', "Error: Please verify all required items fields are completed!");
       return;
     }
-    handleCreatePo(formData);
-    setShowCreateModal(false);
-    triggerAlert('success', `Purchase Order ${formData.poNumber} has been successfully digitized!`);
+    try {
+      await handleCreatePo(formData);
+      setShowCreateModal(false);
+      triggerAlert('success', `Purchase Order ${formData.poNumber} has been successfully digitized!`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to digitize purchase order: ${err.message}`);
+    }
   };
 
-  const onEditSubmit = (e) => {
+  const onEditSubmit = async (e) => {
     e.preventDefault();
     if (!selectedPo || !formData.poNumber || !formData.contractId) {
       triggerAlert('danger', 'Error: All fields are required.');
       return;
     }
-    handleUpdatePo(selectedPo.id, formData);
-    setShowEditModal(false);
-    triggerAlert('success', `Purchase Order ${formData.poNumber} metadata updated successfully.`);
+    try {
+      await handleUpdatePo(selectedPo.id, formData);
+      setShowEditModal(false);
+      triggerAlert('success', `Purchase Order ${formData.poNumber} metadata updated successfully.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to update purchase order: ${err.message}`);
+    }
   };
 
-  const onDeleteConfirm = () => {
+  const onDeleteConfirm = async () => {
     if (!selectedPo) return;
     const poNumber = selectedPo.poNumber;
-    handleDeletePo(selectedPo.id);
-    setShowDeleteConfirm(false);
-    triggerAlert('success', `Purchase Order ${poNumber} has been successfully deleted.`);
+    try {
+      await handleDeletePo(selectedPo.id);
+      setShowDeleteConfirm(false);
+      triggerAlert('success', `Purchase Order ${poNumber} has been successfully deleted.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to delete purchase order: ${err.message}`);
+    }
   };
 
-  const openRejectionLetter = (po) => {
+  const openRejectionLetter = async (po) => {
     const existing = rejectionLetters.find(l => l.poId === po.id);
     if (existing) {
       setSelectedLetter(existing);
     } else {
-      const created = generateRejectionLetter(po);
-      setSelectedLetter(created);
+      try {
+        const created = await generateRejectionLetter(po);
+        setSelectedLetter(created);
+      } catch (err) {
+        triggerAlert('danger', `Failed to generate rejection letter: ${err.message}`);
+        return;
+      }
     }
     setShowLetterModal(true);
   };
 
-  const onSendRejectionLetter = (id) => {
-    handleSendRejectionLetter(id);
-    setShowLetterModal(false);
-    triggerAlert('success', 'Official rejection letter has been issued and emailed to the agency.');
+  const onSendRejectionLetter = async (id) => {
+    try {
+      await handleSendRejectionLetter(id);
+      setShowLetterModal(false);
+      triggerAlert('success', 'Official rejection letter has been issued and emailed to the agency.');
+    } catch (err) {
+      triggerAlert('danger', `Failed to send rejection letter: ${err.message}`);
+    }
   };
 
   if (!isCo) {
@@ -299,9 +320,13 @@ export default function ManageOrders() {
                           
                           {po.status === 'PENDING' ? (
                             <button
-                              onClick={() => {
-                                validatePurchaseOrder(po.id);
-                                triggerAlert('success', `Compliance check ran successfully for PO: ${po.poNumber}`);
+                              onClick={async () => {
+                                try {
+                                  await validatePurchaseOrder(po.id);
+                                  triggerAlert('success', `Compliance check ran successfully for PO: ${po.poNumber}`);
+                                } catch (err) {
+                                  triggerAlert('danger', `Failed to run compliance check: ${err.message}`);
+                                }
                               }}
                               className="btn btn-primary"
                               style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}
@@ -320,9 +345,13 @@ export default function ManageOrders() {
                             </button>
                           ) : po.status === 'SHIPPED' ? (
                             <button
-                              onClick={() => {
-                                closeAndArchivePo(po.id);
-                                triggerAlert('success', `Purchase order ${po.poNumber} has been successfully closed and archived.`);
+                              onClick={async () => {
+                                try {
+                                  await closeAndArchivePo(po.id);
+                                  triggerAlert('success', `Purchase order ${po.poNumber} has been successfully closed and archived.`);
+                                } catch (err) {
+                                  triggerAlert('danger', `Failed to close & archive PO: ${err.message}`);
+                                }
                               }}
                               className="btn btn-success"
                               style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}

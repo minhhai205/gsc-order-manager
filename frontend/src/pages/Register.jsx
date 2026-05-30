@@ -14,12 +14,14 @@ export default function Register() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password || !name) return;
-    const res = register(username, password, name, role);
+    setError('');
+    setSuccess('');
+    const res = await register(username, password, name, role);
     if (res.success) {
-      setSuccess('Account registered successfully! Redirecting...');
+      setSuccess('Tài khoản đã đăng ký thành công! Đang chuyển hướng...');
       setTimeout(() => {
         navigate('/login');
       }, 1500);

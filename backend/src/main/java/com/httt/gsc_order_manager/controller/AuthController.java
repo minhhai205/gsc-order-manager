@@ -31,15 +31,18 @@ public class AuthController {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final CustomUserDetailsService userDetailsService;
+    private final com.httt.gsc_order_manager.service.UserService userService;
 
     public AuthController(
         AuthenticationManager authenticationManager,
         JwtService jwtService,
-        CustomUserDetailsService userDetailsService
+        CustomUserDetailsService userDetailsService,
+        com.httt.gsc_order_manager.service.UserService userService
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
 
     @PostMapping("/login")
@@ -55,6 +58,20 @@ public class AuthController {
 
         AuthenticatedUser authenticatedUser = (AuthenticatedUser) authentication.getPrincipal();
         return ResponseEntity.ok(buildAuthResponse(authenticatedUser));
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<UserProfileResponse> register(@Valid @RequestBody com.httt.gsc_order_manager.dto.user.CreateUserRequest request) {
+        com.httt.gsc_order_manager.dto.user.UserResponse userResponse = userService.create(request);
+        UserProfileResponse profileResponse = UserProfileResponse.builder()
+            .id(userResponse.getId())
+            .fullName(userResponse.getFullName())
+            .email(userResponse.getEmail())
+            .department(userResponse.getDepartment())
+            .role(userResponse.getRole())
+            .status(userResponse.getStatus())
+            .build();
+        return ResponseEntity.status(HttpStatus.CREATED).body(profileResponse);
     }
 
     @PostMapping("/refresh-token")

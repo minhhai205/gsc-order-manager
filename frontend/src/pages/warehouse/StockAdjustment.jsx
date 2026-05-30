@@ -73,16 +73,20 @@ export default function StockAdjustment() {
     setShowDeleteConfirm(true);
   };
 
-  const onAdjustSubmit = (e) => {
+  const onAdjustSubmit = async (e) => {
     e.preventDefault();
     if (!adjustData.equipmentId || !adjustData.quantity) return;
-    handleStockAdjustment(adjustData);
-    setShowAdjustModal(false);
-    const eqName = equipment.find(eq => eq.id.toString() === adjustData.equipmentId)?.code || 'item';
-    triggerAlert('success', `Stock adjusted successfully for ${eqName} (${adjustData.operation === 'INCREASE' ? '+' : '-'}${adjustData.quantity}).`);
+    try {
+      await handleStockAdjustment(adjustData);
+      setShowAdjustModal(false);
+      const eqName = equipment.find(eq => eq.id.toString() === adjustData.equipmentId)?.code || 'item';
+      triggerAlert('success', `Stock adjusted successfully for ${eqName} (${adjustData.operation === 'INCREASE' ? '+' : '-'}${adjustData.quantity}).`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to adjust stock: ${err.message}`);
+    }
   };
 
-  const onCreateSubmit = (e) => {
+  const onCreateSubmit = async (e) => {
     e.preventDefault();
     if (!formData.code || !formData.name || !formData.price || !formData.stock || !formData.manufacturer || !formData.hardwareConfig) {
       triggerAlert('danger', 'Error: All creation fields are required.');
@@ -99,12 +103,16 @@ export default function StockAdjustment() {
       triggerAlert('danger', 'Error: Unit Price must be a positive number greater than zero.');
       return;
     }
-    handleCreateEquipment(formData);
-    setShowCreateModal(false);
-    triggerAlert('success', `Equipment ${formData.code} added to catalog successfully!`);
+    try {
+      await handleCreateEquipment(formData);
+      setShowCreateModal(false);
+      triggerAlert('success', `Equipment ${formData.code} added to catalog successfully!`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to add equipment: ${err.message}`);
+    }
   };
 
-  const onEditSubmit = (e) => {
+  const onEditSubmit = async (e) => {
     e.preventDefault();
     if (!selectedEq || !formData.code || !formData.name || !formData.price || !formData.manufacturer || !formData.hardwareConfig) {
       triggerAlert('danger', 'Error: All updating fields are required.');
@@ -115,17 +123,25 @@ export default function StockAdjustment() {
       triggerAlert('danger', 'Error: Unit Price must be a positive number greater than zero.');
       return;
     }
-    handleUpdateEquipment(selectedEq.id, formData);
-    setShowEditModal(false);
-    triggerAlert('success', `Equipment ${formData.code} specifications updated successfully.`);
+    try {
+      await handleUpdateEquipment(selectedEq.id, formData);
+      setShowEditModal(false);
+      triggerAlert('success', `Equipment ${formData.code} specifications updated successfully.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to update equipment: ${err.message}`);
+    }
   };
 
-  const onDeleteConfirm = () => {
+  const onDeleteConfirm = async () => {
     if (!selectedEq) return;
     const code = selectedEq.code;
-    handleDeleteEquipment(selectedEq.id);
-    setShowDeleteConfirm(false);
-    triggerAlert('success', `Equipment ${code} was purged from catalog.`);
+    try {
+      await handleDeleteEquipment(selectedEq.id);
+      setShowDeleteConfirm(false);
+      triggerAlert('success', `Equipment ${code} was purged from catalog.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to delete equipment: ${err.message}`);
+    }
   };
 
   if (!isWarehouse) {

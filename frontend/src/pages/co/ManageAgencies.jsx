@@ -62,34 +62,46 @@ export default function ManageAgencies() {
     setShowDeleteConfirm(true);
   };
 
-  const onCreateSubmit = (e) => {
+  const onCreateSubmit = async (e) => {
     e.preventDefault();
     if (!formData.code || !formData.name || !formData.address || !formData.contact || !formData.phone || !formData.email || !formData.jobTitle) {
       triggerAlert('danger', 'Error: All agency registration fields are required.');
       return;
     }
-    handleCreateAgency(formData);
-    setShowCreateModal(false);
-    triggerAlert('success', `Agency profile ${formData.code} has been successfully registered!`);
+    try {
+      await handleCreateAgency(formData);
+      setShowCreateModal(false);
+      triggerAlert('success', `Agency profile ${formData.code} has been successfully registered!`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to register agency: ${err.message}`);
+    }
   };
 
-  const onEditSubmit = (e) => {
+  const onEditSubmit = async (e) => {
     e.preventDefault();
     if (!selectedAgency || !formData.name || !formData.address || !formData.contact || !formData.phone || !formData.email || !formData.jobTitle) {
       triggerAlert('danger', 'Error: All fields must be filled to update.');
       return;
     }
-    handleUpdateAgency(selectedAgency.id, formData);
-    setShowEditModal(false);
-    triggerAlert('success', `Agency profile ${formData.code} has been successfully updated.`);
+    try {
+      await handleUpdateAgency(selectedAgency.id, formData);
+      setShowEditModal(false);
+      triggerAlert('success', `Agency profile ${formData.code} has been successfully updated.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to update agency: ${err.message}`);
+    }
   };
 
-  const onDeleteConfirm = () => {
+  const onDeleteConfirm = async () => {
     if (!selectedAgency) return;
     const code = selectedAgency.code;
-    handleDeleteAgency(selectedAgency.id);
-    setShowDeleteConfirm(false);
-    triggerAlert('success', `Agency profile ${code} was successfully destroyed.`);
+    try {
+      await handleDeleteAgency(selectedAgency.id);
+      setShowDeleteConfirm(false);
+      triggerAlert('success', `Agency profile ${code} was successfully destroyed.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to delete agency: ${err.message}`);
+    }
   };
 
   if (!isCo) {

@@ -33,24 +33,32 @@ export default function AvailabilityChecks() {
     }, 4500);
   };
 
-  const runCheck = (po) => {
-    const result = handleInventoryCheck(po);
-    if (!result.success) {
-      setSelectedPo(po);
-      setSelectedShortages(result.shortages);
-      setShowShortageModal(true);
-    } else {
-      triggerAlert('success', `Inventory allocation check cleared successfully for PO: ${po.poNumber}! Validated for shipment.`);
+  const runCheck = async (po) => {
+    try {
+      const result = await handleInventoryCheck(po);
+      if (!result.success) {
+        setSelectedPo(po);
+        setSelectedShortages(result.shortages);
+        setShowShortageModal(true);
+      } else {
+        triggerAlert('success', `Inventory allocation check cleared successfully for PO: ${po.poNumber}! Validated for shipment.`);
+      }
+    } catch (err) {
+      triggerAlert('danger', `Failed to run stock check: ${err.message}`);
     }
   };
 
-  const confirmExceptionReport = () => {
+  const confirmExceptionReport = async () => {
     if (!selectedPo) return;
-    handleConfirmExceptionReport(selectedPo, selectedShortages);
-    setShowShortageModal(false);
-    setSelectedPo(null);
-    setSelectedShortages([]);
-    triggerAlert('success', `Deficit exception report EXP-${Date.now()} has been successfully generated.`);
+    try {
+      await handleConfirmExceptionReport(selectedPo, selectedShortages);
+      setShowShortageModal(false);
+      setSelectedPo(null);
+      setSelectedShortages([]);
+      triggerAlert('success', `Deficit exception report has been successfully generated.`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to generate exception report: ${err.message}`);
+    }
   };
 
   const viewReportDetails = (report) => {

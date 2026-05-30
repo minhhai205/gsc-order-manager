@@ -72,29 +72,29 @@ export default function SystemAdmin() {
   };
 
   // UC11: Backup Trigger
-  const onBackup = () => {
+  const onBackup = async () => {
     try {
-      const path = triggerDatabaseBackup();
+      const path = await triggerDatabaseBackup();
       showAlert(`System Database archive written to path: ${path}`, 'success');
     } catch (err) {
-      showAlert('Failed to write database backup.', 'error');
+      showAlert('Failed to write database backup: ' + err.message, 'error');
     }
   };
 
   // UC11: Restore Trigger
-  const onRestore = (bak) => {
+  const onRestore = async (bak) => {
     if (window.confirm(`Are you sure you want to restore the system state to database archive: "${bak.fileName}"? This will overwrite active parameters.`)) {
       try {
-        triggerDatabaseRestore(bak);
+        await triggerDatabaseRestore(bak);
         showAlert(`Disaster recovery restoration completed successfully from file: ${bak.fileName}!`, 'success');
       } catch (err) {
-        showAlert('Failed to restore database snap state.', 'error');
+        showAlert('Failed to restore database snap state: ' + err.message, 'error');
       }
     }
   };
 
   // UC10: Create User Account Action
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault();
     
     // Validations
@@ -119,7 +119,7 @@ export default function SystemAdmin() {
       return;
     }
 
-    const result = adminCreateUser(formDataUsername, formDataPassword, formDataName, formDataRole, formDataStatus);
+    const result = await adminCreateUser(formDataUsername, formDataPassword, formDataName, formDataRole, formDataStatus);
     
     if (result.success) {
       if (addAuditLog) {
@@ -145,7 +145,7 @@ export default function SystemAdmin() {
   };
 
   // UC10: Update User Action
-  const handleUpdateUser = (e) => {
+  const handleUpdateUser = async (e) => {
     e.preventDefault();
 
     if (!formDataName.trim()) {
@@ -157,7 +157,7 @@ export default function SystemAdmin() {
       return;
     }
 
-    const result = adminUpdateUser(selectedUser.username, {
+    const result = await adminUpdateUser(selectedUser.username, {
       name: formDataName,
       password: formDataPassword || undefined,
       role: formDataRole,
@@ -177,14 +177,14 @@ export default function SystemAdmin() {
   };
 
   // UC10: Toggle Quick User Status (Active/Suspend)
-  const handleToggleStatus = (user) => {
+  const handleToggleStatus = async (user) => {
     if (user.username === currentUser.username) {
       showAlert('Cannot suspend your own active administrator account!', 'error');
       return;
     }
 
-    const nextStatus = user.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
-    const result = adminUpdateUser(user.username, {
+    const nextStatus = user.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE';
+    const result = await adminUpdateUser(user.username, {
       name: user.name,
       role: user.role,
       status: nextStatus
@@ -201,14 +201,14 @@ export default function SystemAdmin() {
   };
 
   // UC10: Delete User
-  const handleDeleteUser = (user) => {
+  const handleDeleteUser = async (user) => {
     if (user.username === currentUser.username) {
       showAlert('Cannot delete your own active administrator account!', 'error');
       return;
     }
 
     if (window.confirm(`Are you absolutely sure you want to permanently delete the officer account for "${user.name}" (${user.username})? This action cannot be undone.`)) {
-      const result = adminDeleteUser(user.username);
+      const result = await adminDeleteUser(user.username);
       if (result.success) {
         if (addAuditLog) {
           addAuditLog('DELETE_USER', 'UserAccount', `Purged officer account record: ${user.username}`);

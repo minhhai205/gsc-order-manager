@@ -11,17 +11,21 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
-  const handleQuickLogin = (uname) => {
-    const res = login(uname, '123');
+  const handleQuickLogin = async (uname) => {
+    setError('');
+    const res = await login(uname, '123');
     if (res.success) {
       navigate('/');
+    } else {
+      setError(res.message);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!username || !password) return;
-    const res = login(username, password);
+    setError('');
+    const res = await login(username, password);
     if (res.success) {
       navigate('/');
     } else {

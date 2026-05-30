@@ -34,17 +34,21 @@ export default function ShippingBills() {
     setShowShippingModal(true);
   };
 
-  const onSubmitShipping = (e) => {
+  const onSubmitShipping = async (e) => {
     e.preventDefault();
     if (!selectedPo) return;
-    const success = handleConfirmShipping(selectedPo);
-    if (!success) {
-      triggerAlert('danger', "Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
-    } else {
-      triggerAlert('success', `Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
+    try {
+      const success = await handleConfirmShipping(selectedPo);
+      if (!success) {
+        triggerAlert('danger', "Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
+      } else {
+        triggerAlert('success', `Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
+      }
+      setShowShippingModal(false);
+      setSelectedPo(null);
+    } catch (err) {
+      triggerAlert('danger', `Failed to dispatch cargo: ${err.message}`);
     }
-    setShowShippingModal(false);
-    setSelectedPo(null);
   };
 
   const openDetail = (bill) => {
