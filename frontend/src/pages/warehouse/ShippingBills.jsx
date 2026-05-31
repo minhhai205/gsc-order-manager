@@ -142,7 +142,7 @@ export default function ShippingBills() {
                           })}
                         </div>
                       </td>
-                      <td><span className="badge badge-success">ARRIVED / {bill.status}</span></td>
+                      <td><Badge status={bill.status} /></td>
                       <td>
                         <div className="flex-row align-center gap-xs">
                           <button onClick={() => openDetail(bill)} className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }}>
@@ -273,7 +273,7 @@ export default function ShippingBills() {
                 <span>{selectedBill.createdBy}</span>
 
                 <strong>Transport Status:</strong>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--color-success)', fontWeight: 700 }}><ShieldCheck size={16} /> ARRIVED / {selectedBill.status}</div>
+                <div><Badge status={selectedBill.status} /></div>
               </div>
             </div>
 

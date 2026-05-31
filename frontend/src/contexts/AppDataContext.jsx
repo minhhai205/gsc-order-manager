@@ -419,15 +419,22 @@ export function AppDataProvider({ children }) {
   };
 
   const handleConfirmShipping = async (po) => {
+    const matchedContract = contracts.find(c => c.id === po.contractId);
+    const matchedAgency = matchedContract ? agencies.find(a => a.id === matchedContract.agencyId) : null;
+    const destinationAddress = matchedAgency ? matchedAgency.address : 'Địa chỉ Cơ quan Đối tác';
+
     const requestBody = {
       shippingDate: new Date().toISOString().slice(0, 10),
-      destinationAddress: po.destinationAddress || 'Địa chỉ Cơ quan Đối tác',
+      destinationAddress: destinationAddress,
       items: po.items.map(item => ({
         equipmentId: Number(item.equipmentId),
         shippedQuantity: Number(item.quantity)
       }))
     };
-    await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
+    const res = await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
+    if (res && res.data && res.data.id) {
+      await api.patch(`/api/shipping-bills/${res.data.id}/confirm`);
+    }
     loadAllData();
     return true;
   };

@@ -597,7 +597,7 @@ export default function Overview() {
                       <td><strong className="cursor-pointer" onClick={() => openInspector(sb, 'ShippingBill')} style={{ textDecoration: 'underline', color: 'var(--color-primary)' }}>SHP-{sb.id}</strong></td>
                       <td><strong>{sb.poNumber}</strong></td>
                       <td>{sb.shippingDate}</td>
-                      <td><span className="badge badge-success">ARRIVED / {sb.status}</span></td>
+                      <td><Badge status={sb.status} /></td>
                       <td><code style={{ fontSize: '10px' }}>{sb.checksum}</code></td>
                     </tr>
                   ))
@@ -962,7 +962,7 @@ export default function Overview() {
                     <span>{selectedItem.shippingDate}</span>
 
                     <strong>Cargo status:</strong>
-                    <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>ARRIVED / {selectedItem.status}</span>
+                    <div><Badge status={selectedItem.status} /></div>
 
                     <strong>Cryptographic sign:</strong>
                     <code style={{ fontSize: '10px' }}>{selectedItem.checksum}</code>
