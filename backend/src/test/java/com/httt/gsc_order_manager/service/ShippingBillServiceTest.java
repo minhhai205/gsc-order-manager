@@ -110,7 +110,7 @@ class ShippingBillServiceTest {
     }
 
     @Test
-    void confirmDeductsStockAndMarksPurchaseOrderShipped() {
+    void confirmDeductsStockAndKeepsPurchaseOrderReadyToShip() {
         Equipment equipment = equipment(20L, "LAP-001", 5);
         PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
         ShippingBill bill = shippingBill(purchaseOrder, equipment, 2, ShippingStatus.DRAFT);
@@ -120,12 +120,35 @@ class ShippingBillServiceTest {
 
         assertThat(response.getStatus()).isEqualTo(ShippingStatus.IN_TRANSIT);
         assertThat(equipment.getAvailableStock()).isEqualTo(3);
-        assertThat(purchaseOrder.getStatus()).isEqualTo(PurchaseOrderStatus.SHIPPED);
+        assertThat(purchaseOrder.getStatus()).isEqualTo(PurchaseOrderStatus.READY_TO_SHIP);
         verify(auditLogService).record(
             eq(AuditAction.ISSUE_SHIPPING_BILL),
             eq(ShippingBill.class.getSimpleName()),
             eq(70L),
             eq("Confirmed shipping bill SB-PO-001")
+        );
+    }
+
+    @Test
+    void updateStatusToDeliveredMarksPurchaseOrderShipped() {
+        Equipment equipment = equipment(20L, "LAP-001", 5);
+        PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
+        ShippingBill bill = shippingBill(purchaseOrder, equipment, 2, ShippingStatus.IN_TRANSIT);
+        when(shippingBillRepository.findById(70L)).thenReturn(Optional.of(bill));
+
+        com.httt.gsc_order_manager.dto.shippingbill.UpdateShippingStatusRequest request =
+            new com.httt.gsc_order_manager.dto.shippingbill.UpdateShippingStatusRequest();
+        request.setStatus(ShippingStatus.DELIVERED);
+
+        ShippingBillResponse response = shippingBillService.updateStatus(70L, request);
+
+        assertThat(response.getStatus()).isEqualTo(ShippingStatus.DELIVERED);
+        assertThat(purchaseOrder.getStatus()).isEqualTo(PurchaseOrderStatus.SHIPPED);
+        verify(auditLogService).record(
+            eq(AuditAction.UPDATE),
+            eq(ShippingBill.class.getSimpleName()),
+            eq(70L),
+            eq("Updated shipping bill status SB-PO-001")
         );
     }
 

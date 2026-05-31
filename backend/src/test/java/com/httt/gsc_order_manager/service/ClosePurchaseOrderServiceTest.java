@@ -46,12 +46,12 @@ class ClosePurchaseOrderServiceTest {
     private ClosePurchaseOrderService closePurchaseOrderService;
 
     @Test
-    void closeClosesPurchaseOrderWhenShippingHasBeenConfirmed() {
+    void closeClosesPurchaseOrderWhenShippingHasBeenDelivered() {
         Equipment equipment = equipment(20L, "LAP-001", 5);
         PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.SHIPPED, equipment, 3);
         when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
         when(shippingBillRepository.findByPurchaseOrderId(40L))
-            .thenReturn(Optional.of(shippingBill(purchaseOrder, ShippingStatus.IN_TRANSIT)));
+            .thenReturn(Optional.of(shippingBill(purchaseOrder, ShippingStatus.DELIVERED)));
 
         PurchaseOrderResponse response = closePurchaseOrderService.close(40L);
 
@@ -67,16 +67,16 @@ class ClosePurchaseOrderServiceTest {
     }
 
     @Test
-    void closeRejectsDraftShippingBill() {
+    void closeRejectsShippingBillThatIsNotDelivered() {
         Equipment equipment = equipment(20L, "LAP-001", 5);
         PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
         when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
         when(shippingBillRepository.findByPurchaseOrderId(40L))
-            .thenReturn(Optional.of(shippingBill(purchaseOrder, ShippingStatus.DRAFT)));
+            .thenReturn(Optional.of(shippingBill(purchaseOrder, ShippingStatus.IN_TRANSIT)));
 
         assertThatThrownBy(() -> closePurchaseOrderService.close(40L))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Purchase order cannot be closed before shipping is confirmed");
+            .hasMessage("Purchase order cannot be closed before shipping is delivered");
     }
 
     @Test

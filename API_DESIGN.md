@@ -368,7 +368,9 @@ Purpose:
 
 - Create shipping bills for purchase orders.
 - Record actually shipped quantities.
-- Deduct inventory when shipping is confirmed.
+- Deduct inventory when shipping is confirmed and the shipping bill moves to `IN_TRANSIT`.
+- Keep the purchase order as `READY_TO_SHIP` while the shipping bill is `IN_TRANSIT`.
+- Mark the purchase order as `SHIPPED` only when the shipping bill status is updated to `DELIVERED`.
 - Export shipping bill as PDF.
 - Write audit log when a shipping bill is created, confirmed, or status is changed.
 

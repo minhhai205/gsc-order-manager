@@ -132,7 +132,6 @@ public class ShippingBillService {
             equipment.setAvailableStock(equipment.getAvailableStock() - item.getShippedQuantity());
         }
         bill.setStatus(ShippingStatus.IN_TRANSIT);
-        bill.getPurchaseOrder().setStatus(PurchaseOrderStatus.SHIPPED);
         auditLogService.record(AuditAction.ISSUE_SHIPPING_BILL, ShippingBill.class.getSimpleName(),
             bill.getId(), "Confirmed shipping bill " + bill.getShippingBillNumber());
         return ShippingBillMapper.toResponse(bill);
@@ -142,6 +141,9 @@ public class ShippingBillService {
     public ShippingBillResponse updateStatus(Long id, UpdateShippingStatusRequest request) {
         ShippingBill bill = findBill(id);
         bill.setStatus(request.getStatus());
+        if (request.getStatus() == ShippingStatus.DELIVERED) {
+            bill.getPurchaseOrder().setStatus(PurchaseOrderStatus.SHIPPED);
+        }
         auditLogService.record(AuditAction.UPDATE, ShippingBill.class.getSimpleName(),
             bill.getId(), "Updated shipping bill status " + bill.getShippingBillNumber());
         return ShippingBillMapper.toResponse(bill);

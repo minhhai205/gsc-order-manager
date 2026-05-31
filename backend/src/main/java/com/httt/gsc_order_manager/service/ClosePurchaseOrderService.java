@@ -35,8 +35,8 @@ public class ClosePurchaseOrderService {
         PurchaseOrder po = findPurchaseOrder(purchaseOrderId);
         ShippingBill bill = shippingBillRepository.findByPurchaseOrderId(purchaseOrderId)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order cannot be closed without a shipping bill"));
-        if (bill.getStatus() == ShippingStatus.DRAFT || bill.getStatus() == ShippingStatus.CANCELLED) {
-            throw new IllegalArgumentException("Purchase order cannot be closed before shipping is confirmed");
+        if (bill.getStatus() != ShippingStatus.DELIVERED) {
+            throw new IllegalArgumentException("Purchase order cannot be closed before shipping is delivered");
         }
         po.setStatus(PurchaseOrderStatus.CLOSED);
         po.setClosedAt(Instant.now());
