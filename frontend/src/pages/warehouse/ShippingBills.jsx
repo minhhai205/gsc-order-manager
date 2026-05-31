@@ -9,7 +9,7 @@ export default function ShippingBills() {
   const { purchaseOrders, shippingBills, equipment, handleConfirmShipping } = useAppData();
   const { currentUser } = useAuth();
 
-  const isFulfillment = currentUser?.role === ROLES.ORDER_FULFILLMENT_STAFF;
+  const isWarehouse = currentUser?.role === ROLES.WAREHOUSE_STAFF;
 
   // Modals state
   const [showShippingModal, setShowShippingModal] = useState(false);
@@ -56,14 +56,14 @@ export default function ShippingBills() {
     setShowDetailModal(true);
   };
 
-  if (!isFulfillment) {
+  if (!isWarehouse) {
     return (
       <div className="flex-col align-center justify-center" style={{ minHeight: '60vh', gap: '16px' }}>
         <div style={{ backgroundColor: 'var(--color-danger-bg)', color: 'var(--color-danger)', border: '1px solid var(--color-danger)', padding: '24px', borderRadius: 'var(--border-radius-lg)', textAlign: 'center', maxWidth: '450px' }}>
           <ShieldAlert size={48} style={{ margin: '0 auto 12px auto' }} />
           <h3>Access Level Restrict</h3>
           <p style={{ fontSize: 'var(--font-size-sm)', margin: '8px 0 0 0', lineHeight: 1.5 }}>
-            This page is strictly reserved for **Order Fulfillment Staff** to dispatch cargo shipments.
+            This page is strictly reserved for **Warehouse Staff** to dispatch cargo shipments.
           </p>
         </div>
       </div>
@@ -77,7 +77,7 @@ export default function ShippingBills() {
     <div>
       <div className="flex-row justify-between align-center" style={{ marginBottom: '24px' }}>
         <div>
-          <h2>Shipping & Dispatch Logistics (Fulfillment Concern)</h2>
+          <h2>Shipping & Dispatch Logistics (Warehouse Concern)</h2>
           <p style={{ margin: 0, fontSize: 'var(--font-size-sm)', color: 'var(--text-muted)' }}>Confirm cargo allocations, record contract expenses, and issue secure Cargo Shipping Bills.</p>
         </div>
       </div>

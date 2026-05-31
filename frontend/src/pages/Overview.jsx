@@ -302,17 +302,17 @@ export default function Overview() {
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon-wrapper success-bg"><Truck size={22} /></div>
+            <div className="stat-icon-wrapper primary-bg"><Building2 size={22} /></div>
             <div>
-              <h3 className="stat-number">{totalLogisticsDispatched}</h3>
-              <p className="stat-label">Dispatched Cargoes</p>
+              <h3 className="stat-number">{equipment.length}</h3>
+              <p className="stat-label">Catalog Items</p>
             </div>
           </div>
           <div className="stat-card">
             <div className="stat-icon-wrapper secondary-bg"><FileText size={22} /></div>
             <div>
-              <h3 className="stat-number">${totalDispatchedValue.toLocaleString()}</h3>
-              <p className="stat-label">Dispatched Net Value</p>
+              <h3 className="stat-number">{contracts.length}</h3>
+              <p className="stat-label">Active Contracts</p>
             </div>
           </div>
         </div>
@@ -381,47 +381,7 @@ export default function Overview() {
                 <span>Allocate Stock (UC6)</span>
                 <ArrowRight size={16} className="arrow-icon" />
               </Link>
-              <Link to="/fulfillment/shipping" className="quick-action-link-btn">
-                <span>Shipping & Dispatch (UC8)</span>
-                <ArrowRight size={16} className="arrow-icon" />
-              </Link>
             </div>
-          </div>
-        </div>
-
-        {/* Shipped Bills Log Feed */}
-        <div className="box-card">
-          <h3>Recent Dispatched Shipping Bills Registry</h3>
-          <p className="card-description">Secure transportation ledger with registered cryptographic checksums.</p>
-          <div className="table-container">
-            <table className="premium-table">
-              <thead>
-                <tr>
-                  <th>Shipment Ref</th>
-                  <th>PO Reference</th>
-                  <th>Shipping Date</th>
-                  <th>Logistics Status</th>
-                  <th>Security Checksum</th>
-                </tr>
-              </thead>
-              <tbody>
-                {shippingBills.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>No shipping bills issued in this session.</td>
-                  </tr>
-                ) : (
-                  shippingBills.slice(0, 4).map(sb => (
-                    <tr key={sb.id}>
-                      <td><strong className="cursor-pointer" onClick={() => openInspector(sb, 'ShippingBill')} style={{ textDecoration: 'underline', color: 'var(--color-primary)' }}>SHP-{sb.id}</strong></td>
-                      <td><strong>{sb.poNumber}</strong></td>
-                      <td>{sb.shippingDate}</td>
-                      <td><span className="badge badge-success">ARRIVED / {sb.status}</span></td>
-                      <td><code style={{ fontSize: '10px' }}>{sb.checksum}</code></td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
@@ -434,6 +394,12 @@ export default function Overview() {
   const renderWarehouseStaffDashboard = () => {
     const lowStockItems = equipment.filter(e => e.stock < e.minStock);
     const totalStockVolume = equipment.reduce((acc, eq) => acc + eq.stock, 0);
+
+    const totalLogisticsDispatched = shippingBills.length;
+    const totalDispatchedValue = shippingBills.reduce((acc, sb) => {
+      const matchedPo = purchaseOrders.find(po => po.poNumber === sb.poNumber);
+      return acc + (matchedPo ? matchedPo.totalAmount : 0);
+    }, 0);
 
     // Prepare simulated pure-CSS bar chart stats
     const topEquipment = equipment.slice(0, 5);
@@ -458,7 +424,7 @@ export default function Overview() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid-cols-4" style={{ marginBottom: '32px' }}>
+        <div className="grid-cols-3" style={{ marginBottom: '32px', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           <div className="stat-card">
             <div className="stat-icon-wrapper primary-bg"><Building2 size={22} /></div>
             <div>
@@ -483,7 +449,21 @@ export default function Overview() {
             </div>
           </div>
           <div className="stat-card">
-            <div className="stat-icon-wrapper secondary-bg"><FileWarning size={22} /></div>
+            <div className="stat-icon-wrapper success-bg"><Truck size={22} /></div>
+            <div>
+              <h3 className="stat-number">{totalLogisticsDispatched}</h3>
+              <p className="stat-label">Dispatched Cargoes</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon-wrapper secondary-bg"><FileText size={22} /></div>
+            <div>
+              <h3 className="stat-number">${totalDispatchedValue.toLocaleString()}</h3>
+              <p className="stat-label">Dispatched Net Value</p>
+            </div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-icon-wrapper warning-bg"><FileWarning size={22} /></div>
             <div>
               <h3 className="stat-number">{exceptionReports.reduce((acc, rep) => acc + rep.shortages.length, 0)}</h3>
               <p className="stat-label">Procurement Gaps</p>
@@ -537,6 +517,10 @@ export default function Overview() {
                 <span>Stock Adjustments (UC3)</span>
                 <ArrowRight size={16} className="arrow-icon" />
               </Link>
+              <Link to="/warehouse/shipping" className="quick-action-link-btn">
+                <span>Shipping & Dispatch (UC8)</span>
+                <ArrowRight size={16} className="arrow-icon" />
+              </Link>
             </div>
           </div>
         </div>
@@ -579,6 +563,42 @@ export default function Overview() {
                           Adjust Stock
                         </Link>
                       </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Shipped Bills Log Feed */}
+        <div className="box-card" style={{ marginTop: '32px' }}>
+          <h3>Recent Dispatched Shipping Bills Registry</h3>
+          <p className="card-description">Secure transportation ledger with registered cryptographic checksums.</p>
+          <div className="table-container">
+            <table className="premium-table">
+              <thead>
+                <tr>
+                  <th>Shipment Ref</th>
+                  <th>PO Reference</th>
+                  <th>Shipping Date</th>
+                  <th>Logistics Status</th>
+                  <th>Security Checksum</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shippingBills.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>No shipping bills issued in this session.</td>
+                  </tr>
+                ) : (
+                  shippingBills.slice(0, 4).map(sb => (
+                    <tr key={sb.id}>
+                      <td><strong className="cursor-pointer" onClick={() => openInspector(sb, 'ShippingBill')} style={{ textDecoration: 'underline', color: 'var(--color-primary)' }}>SHP-{sb.id}</strong></td>
+                      <td><strong>{sb.poNumber}</strong></td>
+                      <td>{sb.shippingDate}</td>
+                      <td><span className="badge badge-success">ARRIVED / {sb.status}</span></td>
+                      <td><code style={{ fontSize: '10px' }}>{sb.checksum}</code></td>
                     </tr>
                   ))
                 )}

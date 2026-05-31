@@ -9,7 +9,7 @@ import ManageAgencies from './pages/co/ManageAgencies';
 import ManageContracts from './pages/co/ManageContracts';
 import ManageOrders from './pages/co/ManageOrders';
 import AvailabilityChecks from './pages/fulfillment/AvailabilityChecks';
-import ShippingBills from './pages/fulfillment/ShippingBills';
+import ShippingBills from './pages/warehouse/ShippingBills';
 import StockAdjustment from './pages/warehouse/StockAdjustment';
 import SystemAdmin from './pages/admin/SystemAdmin';
 import Login from './pages/Login';
@@ -59,9 +59,9 @@ export default function App() {
                 } 
               />
               <Route 
-                path="fulfillment/shipping" 
+                path="warehouse/shipping" 
                 element={
-                  <ProtectedRoute allowedRoles={[ROLES.ORDER_FULFILLMENT_STAFF]}>
+                  <ProtectedRoute allowedRoles={[ROLES.WAREHOUSE_STAFF]}>
                     <ShippingBills />
                   </ProtectedRoute>
                 } 

@@ -12,7 +12,7 @@ export default function Sidebar() {
   const showAgencies = role === ROLES.CONTRACTING_OFFICER;
   const showOrders = role === ROLES.CONTRACTING_OFFICER;
   const showChecks = role === ROLES.ORDER_FULFILLMENT_STAFF;
-  const showShipping = role === ROLES.ORDER_FULFILLMENT_STAFF;
+  const showShipping = role === ROLES.WAREHOUSE_STAFF;
   const showWarehouse = role === ROLES.WAREHOUSE_STAFF;
   const showAdmin = role === ROLES.SYSTEM_ADMIN;
 
@@ -67,7 +67,7 @@ export default function Sidebar() {
 
       {showShipping && (
         <NavLink 
-          to="/fulfillment/shipping" 
+          to="/warehouse/shipping" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
         >
           <Truck size={18} />
