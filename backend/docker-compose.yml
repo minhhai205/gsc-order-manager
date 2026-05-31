@@ -36,9 +36,14 @@ services:
       APP_SECURITY_DEFAULT_ADMIN_PASSWORD: Admin@123
       APP_SECURITY_DEFAULT_ADMIN_FULL_NAME: System Administrator
       APP_SECURITY_DEFAULT_ADMIN_DEPARTMENT: Administration
+      APP_BACKUP_DIRECTORY: /app/backups
+      APP_BACKUP_MYSQLDUMP_COMMAND: mysqldump
+      APP_BACKUP_MYSQL_COMMAND: mysql
       TZ: Asia/Ho_Chi_Minh
     ports:
       - "8080:8080"
+    volumes:
+      - D:/gsc-order-manager-backups:/app/backups
     restart: on-failure
 
 volumes:
