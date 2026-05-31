@@ -14,7 +14,11 @@ export default function Login() {
 
   const handleQuickLogin = async (uname) => {
     setError('');
-    const res = await login(uname, '123');
+    let password = '123';
+    if (uname == "admin") {
+      password = 'Admin@123';
+    }
+    const res = await login(uname, password);
     if (res.success) {
       navigate('/');
     } else {
@@ -37,7 +41,7 @@ export default function Login() {
   return (
     <div className="auth-wrapper">
       <div className="premium-auth-card">
-        
+
         <div className="auth-header-logo-centered">
           <Layers size={36} className="pulse-icon" style={{ color: 'var(--color-primary)' }} />
           <h2>GSC Order Manager</h2>
@@ -56,9 +60,9 @@ export default function Login() {
             <label>Username</label>
             <div className="auth-input-wrapper">
               <User size={18} className="auth-input-icon" />
-              <input 
-                type="text" 
-                placeholder="Enter command username" 
+              <input
+                type="text"
+                placeholder="Enter command username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -71,16 +75,16 @@ export default function Login() {
             <label>Access Password</label>
             <div className="auth-input-wrapper">
               <Lock size={18} className="auth-input-icon" />
-              <input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="••••••••" 
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 className="auth-input"
               />
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 className="password-toggle-btn"
                 title={showPassword ? "Hide password" : "Show password"}

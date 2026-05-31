@@ -73,38 +73,38 @@ const mapContractRequest = (data) => ({
 
 const mapPO = (po) => {
   const history = [
-    { 
-      timestamp: po.createdAt ? new Date(po.createdAt).toLocaleString() : '', 
-      action: 'DIGITIZED', 
-      user: 'Hệ thống', 
-      comment: 'Đơn đặt hàng được số hoá và lưu trữ trên cơ sở dữ liệu.' 
+    {
+      timestamp: po.createdAt ? new Date(po.createdAt).toLocaleString() : '',
+      action: 'DIGITIZED',
+      user: 'Hệ thống',
+      comment: 'Đơn đặt hàng được số hoá và lưu trữ trên cơ sở dữ liệu.'
     }
   ];
 
   if (po.validatedAt) {
-    history.push({ 
-      timestamp: new Date(po.validatedAt).toLocaleString(), 
-      action: po.status === 'INVALID' ? 'REJECTED' : 'COMPLIANCE_AUDITED', 
-      user: 'Officer', 
-      comment: po.validationReason || 'Hoàn thành việc đối soát đơn hàng.' 
+    history.push({
+      timestamp: new Date(po.validatedAt).toLocaleString(),
+      action: po.status === 'INVALID' ? 'REJECTED' : 'COMPLIANCE_AUDITED',
+      user: 'Officer',
+      comment: po.validationReason || 'Hoàn thành việc đối soát đơn hàng.'
     });
   }
 
   if (po.status === 'SHIPPED') {
-    history.push({ 
-      timestamp: po.updatedAt ? new Date(po.updatedAt).toLocaleString() : '', 
-      action: 'SHIPPED', 
-      user: 'Warehouse', 
-      comment: 'Vận đơn đã được lập, kho xuất hàng thành công.' 
+    history.push({
+      timestamp: po.updatedAt ? new Date(po.updatedAt).toLocaleString() : '',
+      action: 'SHIPPED',
+      user: 'Warehouse',
+      comment: 'Vận đơn đã được lập, kho xuất hàng thành công.'
     });
   }
 
   if (po.status === 'CLOSED') {
-    history.push({ 
-      timestamp: po.closedAt ? new Date(po.closedAt).toLocaleString() : '', 
-      action: 'ARCHIVED', 
-      user: 'Hệ thống', 
-      comment: 'Đơn hàng được lưu trữ dài hạn.' 
+    history.push({
+      timestamp: po.closedAt ? new Date(po.closedAt).toLocaleString() : '',
+      action: 'ARCHIVED',
+      user: 'Hệ thống',
+      comment: 'Đơn hàng được lưu trữ dài hạn.'
     });
   }
 
@@ -403,7 +403,9 @@ export function AppDataProvider({ children }) {
       shortage: item.shortageQuantity
     })) : [];
 
-    if (response.allItemsAvailable) {
+    console.log('Inventory Check Result:', response);
+
+    if (response.data.allItemsAvailable) {
       await api.patch(`/api/purchase-orders/${po.id}/confirm-inventory-check`);
     }
 

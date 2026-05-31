@@ -48,6 +48,10 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/auth/login", "/api/auth/refresh-token", "/api/auth/register").permitAll()
                 .requestMatchers("/api/health").permitAll()
+                .requestMatchers("/api/purchase-orders/*/inventory-check")
+                    .hasAnyRole("SYSTEM_ADMIN", "ORDER_FULFILLMENT_STAFF")
+                .requestMatchers("/api/purchase-orders/*/confirm-inventory-check")
+                    .hasAnyRole("SYSTEM_ADMIN", "ORDER_FULFILLMENT_STAFF")
                 .requestMatchers("/api/users/**", "/api/audit-logs/**", "/api/backups/**", "/api/restores/**")
                     .hasRole("SYSTEM_ADMIN")
                 .requestMatchers("/api/purchase-orders/*/shipping-bill")
