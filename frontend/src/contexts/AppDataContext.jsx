@@ -265,7 +265,7 @@ export function AppDataProvider({ children }) {
             })) : [],
             status: bill.status,
             destinationAddress: bill.destinationAddress || '',
-            createdBy: bill.performedBy || 'SYSTEM'
+            createdBy: bill.createdBy || 'SYSTEM'
           })));
         }
       }).catch(err => console.error('Failed to load shipping bills', err));
