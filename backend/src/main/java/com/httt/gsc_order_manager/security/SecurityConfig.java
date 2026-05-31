@@ -2,6 +2,7 @@ package com.httt.gsc_order_manager.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -54,6 +55,10 @@ public class SecurityConfig {
                     .hasAnyRole("SYSTEM_ADMIN", "ORDER_FULFILLMENT_STAFF")
                 .requestMatchers("/api/users/**", "/api/audit-logs/**", "/api/backups/**", "/api/restores/**")
                     .hasRole("SYSTEM_ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/equipment/**")
+                    .hasAnyRole("SYSTEM_ADMIN", "WAREHOUSE_STAFF", "CONTRACTING_OFFICER")
+                .requestMatchers(HttpMethod.GET, "/api/purchase-orders/**")
+                    .hasAnyRole("SYSTEM_ADMIN", "CONTRACTING_OFFICER", "WAREHOUSE_STAFF", "ORDER_FULFILLMENT_STAFF")
                 .requestMatchers("/api/purchase-orders/*/shipping-bill")
                     .hasAnyRole("SYSTEM_ADMIN", "WAREHOUSE_STAFF")
                 .requestMatchers("/api/purchase-orders/*/inventory-check", "/api/purchase-orders/*/confirm-inventory-check", "/api/purchase-orders/*/exception-report")
