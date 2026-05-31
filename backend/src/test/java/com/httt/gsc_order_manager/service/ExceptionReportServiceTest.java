@@ -63,6 +63,7 @@ class ExceptionReportServiceTest {
 
         assertThat(response.getReportNumber()).isEqualTo("ER-PO-001");
         assertThat(response.getItems()).extracting("shortageQuantity").containsExactly(2);
+        assertThat(purchaseOrder.getStatus()).isEqualTo(PurchaseOrderStatus.READY_TO_SHIP);
         verify(auditLogService).record(
             eq(AuditAction.CREATE_EXCEPTION_REPORT),
             eq(ExceptionReport.class.getSimpleName()),

@@ -95,6 +95,7 @@ public class ExceptionReportService {
             throw new IllegalArgumentException("Purchase order has no shortage items");
         }
         ExceptionReport savedReport = exceptionReportRepository.save(report);
+        purchaseOrder.setStatus(PurchaseOrderStatus.READY_TO_SHIP);
         auditLogService.record(AuditAction.CREATE_EXCEPTION_REPORT, ExceptionReport.class.getSimpleName(),
             savedReport.getId(), "Created exception report " + savedReport.getReportNumber());
         return ExceptionReportMapper.toResponse(savedReport);

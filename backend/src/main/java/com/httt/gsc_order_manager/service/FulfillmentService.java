@@ -57,7 +57,8 @@ public class FulfillmentService {
     public InventoryCheckResponse checkInventory(Long purchaseOrderId) {
         PurchaseOrder purchaseOrder = findPurchaseOrder(purchaseOrderId);
         if (purchaseOrder.getStatus() != PurchaseOrderStatus.OUTSTANDING
-            && purchaseOrder.getStatus() != PurchaseOrderStatus.INVENTORY_CHECKED) {
+            && purchaseOrder.getStatus() != PurchaseOrderStatus.INVENTORY_CHECKED
+            && purchaseOrder.getStatus() != PurchaseOrderStatus.READY_TO_SHIP) {
             throw new IllegalArgumentException("Inventory can only be checked for outstanding purchase orders");
         }
 
@@ -71,13 +72,13 @@ public class FulfillmentService {
             ExceptionReport exceptionReport = upsertExceptionReport(purchaseOrder, items);
             exceptionReportNumber = exceptionReport.getReportNumber();
         }
-        purchaseOrder.setStatus(PurchaseOrderStatus.INVENTORY_CHECKED);
+        purchaseOrder.setStatus(PurchaseOrderStatus.READY_TO_SHIP);
 
         auditLogService.record(
             AuditAction.UPDATE,
             PurchaseOrder.class.getSimpleName(),
             purchaseOrder.getId(),
-            "Checked inventory for purchase order " + purchaseOrder.getPoNumber()
+            "Checked inventory and transferred purchase order " + purchaseOrder.getPoNumber() + " to warehouse"
         );
         return InventoryCheckResponse.builder()
             .purchaseOrder(PurchaseOrderMapper.toResponse(purchaseOrder))
@@ -90,6 +91,9 @@ public class FulfillmentService {
     @Transactional
     public PurchaseOrderResponse confirmInventoryCheck(Long purchaseOrderId) {
         PurchaseOrder purchaseOrder = findPurchaseOrder(purchaseOrderId);
+        if (purchaseOrder.getStatus() == PurchaseOrderStatus.READY_TO_SHIP) {
+            return PurchaseOrderMapper.toResponse(purchaseOrder);
+        }
         if (purchaseOrder.getStatus() != PurchaseOrderStatus.INVENTORY_CHECKED) {
             throw new IllegalArgumentException("Inventory check must be completed before confirmation");
         }

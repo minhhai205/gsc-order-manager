@@ -62,7 +62,7 @@ class FulfillmentServiceTest {
         assertThat(response.isAllItemsAvailable()).isFalse();
         assertThat(response.getExceptionReportNumber()).isEqualTo("ER-PO-001");
         assertThat(response.getItems()).extracting("shortageQuantity").containsExactly(2);
-        assertThat(purchaseOrder.getStatus()).isEqualTo(PurchaseOrderStatus.INVENTORY_CHECKED);
+        assertThat(purchaseOrder.getStatus()).isEqualTo(PurchaseOrderStatus.READY_TO_SHIP);
         verify(auditLogService).record(
             eq(AuditAction.CREATE_EXCEPTION_REPORT),
             eq(ExceptionReport.class.getSimpleName()),
@@ -95,6 +95,16 @@ class FulfillmentServiceTest {
             eq(40L),
             eq("Confirmed inventory check for purchase order PO-001")
         );
+    }
+
+    @Test
+    void confirmInventoryCheckKeepsReadyToShipPurchaseOrderReadyToShip() {
+        PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment(20L, "LAP-001", 10), 3);
+        when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
+
+        PurchaseOrderResponse response = fulfillmentService.confirmInventoryCheck(40L);
+
+        assertThat(response.getStatus()).isEqualTo(PurchaseOrderStatus.READY_TO_SHIP);
     }
 
     private PurchaseOrder purchaseOrder(PurchaseOrderStatus status, Equipment equipment, int requestedQuantity) {
