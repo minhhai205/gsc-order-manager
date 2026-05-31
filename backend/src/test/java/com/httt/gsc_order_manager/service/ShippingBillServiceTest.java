@@ -11,6 +11,8 @@ import com.httt.gsc_order_manager.dto.shippingbill.CreateShippingBillRequest;
 import com.httt.gsc_order_manager.dto.shippingbill.ShippingBillItemRequest;
 import com.httt.gsc_order_manager.dto.shippingbill.ShippingBillResponse;
 import com.httt.gsc_order_manager.entity.Equipment;
+import com.httt.gsc_order_manager.entity.ExceptionReport;
+import com.httt.gsc_order_manager.entity.ExceptionReportItem;
 import com.httt.gsc_order_manager.entity.FederalAgency;
 import com.httt.gsc_order_manager.entity.PurchaseOrder;
 import com.httt.gsc_order_manager.entity.PurchaseOrderItem;
@@ -22,6 +24,7 @@ import com.httt.gsc_order_manager.entity.enums.ContractStatus;
 import com.httt.gsc_order_manager.entity.enums.PurchaseOrderStatus;
 import com.httt.gsc_order_manager.entity.enums.ShippingStatus;
 import com.httt.gsc_order_manager.repository.PurchaseOrderRepository;
+import com.httt.gsc_order_manager.repository.ExceptionReportRepository;
 import com.httt.gsc_order_manager.repository.ShippingBillRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -44,6 +47,9 @@ class ShippingBillServiceTest {
     private PurchaseOrderRepository purchaseOrderRepository;
 
     @Mock
+    private ExceptionReportRepository exceptionReportRepository;
+
+    @Mock
     private AuditLogService auditLogService;
 
     @Mock
@@ -58,6 +64,7 @@ class ShippingBillServiceTest {
         PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
         when(shippingBillRepository.existsByPurchaseOrderId(40L)).thenReturn(false);
         when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
+        when(exceptionReportRepository.findByPurchaseOrderId(40L)).thenReturn(Optional.empty());
         when(shippingBillRepository.save(any(ShippingBill.class))).thenAnswer(invocation -> {
             ShippingBill bill = invocation.getArgument(0);
             bill.setId(70L);
@@ -86,6 +93,20 @@ class ShippingBillServiceTest {
         assertThatThrownBy(() -> shippingBillService.create(40L, createRequest(20L, 2)))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessage("Purchase order must be ready to ship before creating shipping bill");
+    }
+
+    @Test
+    void createRejectsShippedQuantityGreaterThanAvailableQuantityFromExceptionReport() {
+        Equipment equipment = equipment(20L, "LAP-001", 5);
+        PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
+        when(shippingBillRepository.existsByPurchaseOrderId(40L)).thenReturn(false);
+        when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
+        when(exceptionReportRepository.findByPurchaseOrderId(40L))
+            .thenReturn(Optional.of(exceptionReport(purchaseOrder, equipment, 3, 1, 2)));
+
+        assertThatThrownBy(() -> shippingBillService.create(40L, createRequest(20L, 2)))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessage("Shipped quantity cannot exceed available quantity for equipment LAP-001");
     }
 
     @Test
@@ -137,6 +158,27 @@ class ShippingBillServiceTest {
         item.setEquipment(equipment);
         item.setShippedQuantity(shippedQuantity);
         return item;
+    }
+
+    private ExceptionReport exceptionReport(
+        PurchaseOrder purchaseOrder,
+        Equipment equipment,
+        int requestedQuantity,
+        int availableQuantity,
+        int shortageQuantity
+    ) {
+        ExceptionReport report = new ExceptionReport();
+        report.setId(60L);
+        report.setReportNumber("ER-PO-001");
+        report.setPurchaseOrder(purchaseOrder);
+        ExceptionReportItem item = new ExceptionReportItem();
+        item.setExceptionReport(report);
+        item.setEquipment(equipment);
+        item.setRequestedQuantity(requestedQuantity);
+        item.setAvailableQuantity(availableQuantity);
+        item.setShortageQuantity(shortageQuantity);
+        report.getItems().add(item);
+        return report;
     }
 
     private PurchaseOrder purchaseOrder(PurchaseOrderStatus status, Equipment equipment, int requestedQuantity) {

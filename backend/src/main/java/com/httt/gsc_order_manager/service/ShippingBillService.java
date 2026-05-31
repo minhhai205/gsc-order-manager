@@ -6,6 +6,8 @@ import com.httt.gsc_order_manager.dto.shippingbill.ShippingBillItemRequest;
 import com.httt.gsc_order_manager.dto.shippingbill.ShippingBillResponse;
 import com.httt.gsc_order_manager.dto.shippingbill.UpdateShippingStatusRequest;
 import com.httt.gsc_order_manager.entity.Equipment;
+import com.httt.gsc_order_manager.entity.ExceptionReport;
+import com.httt.gsc_order_manager.entity.ExceptionReportItem;
 import com.httt.gsc_order_manager.entity.PurchaseOrder;
 import com.httt.gsc_order_manager.entity.PurchaseOrderItem;
 import com.httt.gsc_order_manager.entity.ShippingBill;
@@ -14,6 +16,7 @@ import com.httt.gsc_order_manager.entity.enums.AuditAction;
 import com.httt.gsc_order_manager.entity.enums.PurchaseOrderStatus;
 import com.httt.gsc_order_manager.entity.enums.ShippingStatus;
 import com.httt.gsc_order_manager.mapper.ShippingBillMapper;
+import com.httt.gsc_order_manager.repository.ExceptionReportRepository;
 import com.httt.gsc_order_manager.repository.PurchaseOrderRepository;
 import com.httt.gsc_order_manager.repository.ShippingBillRepository;
 import jakarta.persistence.criteria.Predicate;
@@ -21,6 +24,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -33,17 +37,20 @@ public class ShippingBillService {
 
     private final ShippingBillRepository shippingBillRepository;
     private final PurchaseOrderRepository purchaseOrderRepository;
+    private final ExceptionReportRepository exceptionReportRepository;
     private final AuditLogService auditLogService;
     private final SimplePdfService simplePdfService;
 
     public ShippingBillService(
         ShippingBillRepository shippingBillRepository,
         PurchaseOrderRepository purchaseOrderRepository,
+        ExceptionReportRepository exceptionReportRepository,
         AuditLogService auditLogService,
         SimplePdfService simplePdfService
     ) {
         this.shippingBillRepository = shippingBillRepository;
         this.purchaseOrderRepository = purchaseOrderRepository;
+        this.exceptionReportRepository = exceptionReportRepository;
         this.auditLogService = auditLogService;
         this.simplePdfService = simplePdfService;
     }
@@ -77,6 +84,7 @@ public class ShippingBillService {
             throw new IllegalArgumentException("Purchase order must be ready to ship before creating shipping bill");
         }
         Map<Long, PurchaseOrderItem> poItems = purchaseOrderItemsByEquipmentId(po);
+        Optional<ExceptionReport> exceptionReport = exceptionReportRepository.findByPurchaseOrderId(purchaseOrderId);
         ShippingBill bill = new ShippingBill();
         bill.setShippingBillNumber("SB-" + po.getPoNumber());
         bill.setPurchaseOrder(po);
@@ -91,6 +99,12 @@ public class ShippingBillService {
             }
             if (itemRequest.getShippedQuantity() > poItem.getQuantity()) {
                 throw new IllegalArgumentException("Shipped quantity cannot exceed requested quantity");
+            }
+            int maxShippableQuantity = maxShippableQuantity(poItem, exceptionReport);
+            if (itemRequest.getShippedQuantity() > maxShippableQuantity) {
+                throw new IllegalArgumentException(
+                    "Shipped quantity cannot exceed available quantity for equipment " + poItem.getEquipment().getSku()
+                );
             }
             ShippingBillItem item = new ShippingBillItem();
             item.setShippingBill(bill);
@@ -160,6 +174,19 @@ public class ShippingBillService {
             result.put(item.getEquipment().getId(), item);
         }
         return result;
+    }
+
+    private int maxShippableQuantity(PurchaseOrderItem item, Optional<ExceptionReport> exceptionReport) {
+        int requestedQuantity = item.getQuantity();
+        int availableByCurrentStock = Math.min(requestedQuantity, item.getEquipment().getAvailableStock());
+        int availableByExceptionReport = exceptionReport
+            .flatMap(report -> report.getItems()
+                .stream()
+                .filter(reportItem -> reportItem.getEquipment().getId().equals(item.getEquipment().getId()))
+                .findFirst()
+                .map(ExceptionReportItem::getAvailableQuantity))
+            .orElse(requestedQuantity);
+        return Math.min(availableByCurrentStock, availableByExceptionReport);
     }
 
     private Specification<ShippingBill> buildSpecification(String keyword, ShippingStatus status) {
