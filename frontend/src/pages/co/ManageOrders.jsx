@@ -12,7 +12,7 @@ import {
 
 export default function ManageOrders() {
   const { 
-    purchaseOrders, contracts, equipment, agencies, rejectionLetters,
+    purchaseOrders, contracts, equipment, agencies, rejectionLetters, exceptionReports,
     handleCreatePo, handleUpdatePo, handleDeletePo, validatePurchaseOrder, 
     generateRejectionLetter, handleSendRejectionLetter, closeAndArchivePo
   } = useAppData();
@@ -179,6 +179,10 @@ export default function ManageOrders() {
       triggerAlert('danger', `Failed to send rejection letter: ${err.message}`);
     }
   };
+
+  const selectedExceptionReport = selectedPo
+    ? exceptionReports.find(report => report.poId === selectedPo.id)
+    : null;
 
   if (!isCo) {
     return (
@@ -678,6 +682,62 @@ export default function ManageOrders() {
             </div>
 
             {/* Bottom Row: Visual Lifecycle timeline history tracker */}
+            <div className="box-card" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)' }}>
+              <h4 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <FileWarning size={16} style={{ color: 'var(--color-warning)' }} />
+                Exception Report Attachment
+              </h4>
+
+              {selectedExceptionReport ? (
+                <div className="flex-col gap-md">
+                  <div className="grid-cols-2 gap-md" style={{ display: 'grid', gridTemplateColumns: '150px 1fr', rowGap: '12px' }}>
+                    <strong>Report Ref:</strong>
+                    <span>{selectedExceptionReport.reportNumber || `EXP-${selectedExceptionReport.id}`}</span>
+
+                    <strong>Date Generated:</strong>
+                    <span>{selectedExceptionReport.reportedAt}</span>
+
+                    <strong>Reported By:</strong>
+                    <span>{selectedExceptionReport.reportedBy}</span>
+
+                    <strong>Note:</strong>
+                    <span>{selectedExceptionReport.note || 'N/A'}</span>
+                  </div>
+
+                  <div className="table-container">
+                    <table className="premium-table" style={{ fontSize: 'var(--font-size-xs)' }}>
+                      <thead>
+                        <tr>
+                          <th>Equipment</th>
+                          <th>Requested</th>
+                          <th>Available</th>
+                          <th>Shortage</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedExceptionReport.shortages.map((item, idx) => (
+                          <tr key={idx}>
+                            <td>
+                              <strong>{item.code}</strong>
+                              <br />
+                              <small style={{ color: 'var(--text-muted)' }}>{item.name}</small>
+                            </td>
+                            <td>{item.requested}</td>
+                            <td>{item.available}</td>
+                            <td style={{ color: 'var(--color-danger)', fontWeight: 700 }}>-{item.shortage}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ padding: '14px', border: '1px dashed var(--border-light)', borderRadius: 'var(--border-radius-sm)', color: 'var(--text-muted)' }}>
+                  Không có Exception Report gắn với đơn hàng này.
+                </div>
+              )}
+            </div>
+
             <div className="box-card" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)' }}>
               <h4 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Clock size={16} style={{ color: 'var(--color-primary)' }} /> 
