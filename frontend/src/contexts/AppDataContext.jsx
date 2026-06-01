@@ -155,6 +155,7 @@ const mapRejectionLetter = (l) => ({
   agencyEmail: l.agency ? l.agency.contactEmail : '',
   issueDate: l.issuedAt ? new Date(l.issuedAt).toISOString().slice(0, 10) : new Date(l.createdAt).toISOString().slice(0, 10),
   reason: l.reason || '',
+  reasons: l.reason ? l.reason.split(';').map(r => r.trim()).filter(Boolean) : [],
   createdBy: l.issuedBy || 'SYSTEM',
   status: l.status // DRAFT / SENT
 });
