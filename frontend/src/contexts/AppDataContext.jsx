@@ -262,11 +262,14 @@ export function AppDataProvider({ children }) {
             shippingDate: bill.shippingDate ? bill.shippingDate.toString() : '',
             items: bill.items ? bill.items.map(item => ({
               equipmentId: item.equipment ? item.equipment.id : null,
-              quantity: item.shippedQuantity
+              quantity: item.shippedQuantity,
+              unitPrice: Number(item.unitPrice || 0),
+              lineTotal: Number(item.lineTotal || 0)
             })) : [],
+            totalAmount: Number(bill.totalAmount || 0),
             status: bill.status,
             destinationAddress: bill.destinationAddress || '',
-            createdBy: bill.performedBy || 'SYSTEM'
+            createdBy: bill.createdBy || 'SYSTEM'
           })));
         }
       }).catch(err => console.error('Failed to load shipping bills', err));

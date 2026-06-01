@@ -91,6 +91,22 @@ export default function ShippingBills() {
   // Orders that are ready to be shipped
   const readyOrders = purchaseOrders.filter(po => po.status === 'READY_TO_SHIP');
 
+  const getExceptionReport = (poId) => exceptionReports?.find(report => report.poId === poId);
+
+  const getShippableQuantity = (po, item) => {
+    const shortage = getExceptionReport(po.id)?.shortages?.find(reportItem => reportItem.equipmentId === item.equipmentId);
+    return Math.max(0, Number(shortage ? shortage.available : item.quantity));
+  };
+
+  const getUnitPrice = (item) => {
+    const matchedEquipment = equipment.find(eq => eq.id === item.equipmentId);
+    return Number(item.price || item.catalogPrice || matchedEquipment?.price || 0);
+  };
+
+  const getShippingAmount = (po) => po.items.reduce((sum, item) => {
+    return sum + getShippableQuantity(po, item) * getUnitPrice(item);
+  }, 0);
+
   return (
     <div>
       <div className="flex-row justify-between align-center" style={{ marginBottom: '24px' }}>
@@ -216,7 +232,7 @@ export default function ShippingBills() {
                     <Badge status={po.status} />
                   </div>
                   <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--text-muted)' }}>
-                    Fulfillment Cost: ${po.totalAmount.toLocaleString()}
+                    Shipment Value: ${getShippingAmount(po).toLocaleString()}
                   </div>
                   <button 
                     onClick={() => openShippingForm(po)} 
@@ -257,9 +273,9 @@ export default function ShippingBills() {
               <ul className="flex-col gap-xs" style={{ paddingLeft: '20px', fontSize: 'var(--font-size-sm)' }}>
                 {selectedPo.items.map((item, idx) => {
                   const eq = equipment.find(e => e.id === item.equipmentId);
-                  const report = exceptionReports?.find(r => r.poId === selectedPo.id);
+                  const report = getExceptionReport(selectedPo.id);
                   const shortage = report?.shortages?.find(s => s.equipmentId === item.equipmentId);
-                  const displayQty = shortage ? shortage.available : item.quantity;
+                  const displayQty = getShippableQuantity(selectedPo, item);
                   const hasShortage = shortage && shortage.shortage > 0;
                   return (
                     <li key={idx}>
@@ -280,7 +296,7 @@ export default function ShippingBills() {
               
               <div className="flex-row justify-between" style={{ fontSize: 'var(--font-size-sm)' }}>
                 <span>Budget Charge Value:</span>
-                <strong>${selectedPo.totalAmount.toLocaleString()}</strong>
+                <strong>${getShippingAmount(selectedPo).toLocaleString()}</strong>
               </div>
             </div>
 
@@ -325,6 +341,9 @@ export default function ShippingBills() {
 
                 <strong>Transport Status:</strong>
                 <div><Badge status={selectedBill.status} /></div>
+
+                <strong>Shipment Value:</strong>
+                <strong>${Number(selectedBill.totalAmount || 0).toLocaleString()}</strong>
               </div>
             </div>
 
@@ -336,7 +355,7 @@ export default function ShippingBills() {
                   return (
                     <div key={idx} className="flex-row justify-between align-center" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '6px' }}>
                       <span>• <strong>{eq ? eq.code : `#${item.equipmentId}`}</strong> - {eq ? eq.name : 'Unknown Equipment'}</span>
-                      <span>Dispatched Qty: x{item.quantity}</span>
+                      <span>Dispatched Qty: x{item.quantity} • ${Number(item.lineTotal || 0).toLocaleString()}</span>
                     </div>
                   );
                 })}

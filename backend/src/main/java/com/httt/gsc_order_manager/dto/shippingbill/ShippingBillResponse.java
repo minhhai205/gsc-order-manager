@@ -1,6 +1,7 @@
 package com.httt.gsc_order_manager.dto.shippingbill;
 
 import com.httt.gsc_order_manager.entity.enums.ShippingStatus;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -19,6 +20,7 @@ public class ShippingBillResponse {
     private ShippingStatus status;
     private String destinationAddress;
     private String createdBy;
+    private BigDecimal totalAmount;
     private List<ShippingBillItemResponse> items;
     private Instant createdAt;
     private Instant updatedAt;

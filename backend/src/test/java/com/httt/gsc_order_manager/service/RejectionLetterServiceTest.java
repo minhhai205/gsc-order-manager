@@ -46,8 +46,8 @@ class RejectionLetterServiceTest {
     void createForPurchaseOrderCreatesDraftLetterForInvalidPurchaseOrder() {
         PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.INVALID);
         purchaseOrder.setValidationReason("Contract has expired");
-        when(rejectionLetterRepository.existsByPurchaseOrderId(40L)).thenReturn(false);
         when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
+        when(rejectionLetterRepository.findByPurchaseOrderId(40L)).thenReturn(Optional.empty());
         when(rejectionLetterRepository.save(any(RejectionLetter.class))).thenAnswer(invocation -> {
             RejectionLetter letter = invocation.getArgument(0);
             letter.setId(50L);
@@ -69,8 +69,22 @@ class RejectionLetterServiceTest {
     }
 
     @Test
+    void createForPurchaseOrderReturnsExistingDraftLetterWhenAlreadyGenerated() {
+        PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.INVALID);
+        purchaseOrder.setValidationReason("Contract has expired");
+        RejectionLetter existingLetter = rejectionLetter();
+        when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
+        when(rejectionLetterRepository.findByPurchaseOrderId(40L)).thenReturn(Optional.of(existingLetter));
+
+        RejectionLetterResponse response = rejectionLetterService.createForPurchaseOrder(40L);
+
+        assertThat(response.getId()).isEqualTo(50L);
+        assertThat(response.getStatus()).isEqualTo(RejectionLetterStatus.DRAFT);
+        assertThat(response.getReason()).isEqualTo("Contract has expired");
+    }
+
+    @Test
     void createForPurchaseOrderRejectsNonInvalidPurchaseOrder() {
-        when(rejectionLetterRepository.existsByPurchaseOrderId(40L)).thenReturn(false);
         when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder(PurchaseOrderStatus.OUTSTANDING)));
 
         assertThatThrownBy(() -> rejectionLetterService.createForPurchaseOrder(40L))

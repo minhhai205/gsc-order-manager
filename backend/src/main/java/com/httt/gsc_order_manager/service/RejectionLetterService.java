@@ -67,19 +67,26 @@ public class RejectionLetterService {
 
     @Transactional
     public RejectionLetterResponse createForPurchaseOrder(Long purchaseOrderId) {
-        if (rejectionLetterRepository.existsByPurchaseOrderId(purchaseOrderId)) {
-            throw new IllegalArgumentException("Rejection letter already exists for this purchase order");
-        }
-
         PurchaseOrder purchaseOrder = purchaseOrderRepository.findById(purchaseOrderId)
             .orElseThrow(() -> new IllegalArgumentException("Purchase order not found"));
+
+        return RejectionLetterMapper.toResponse(ensureDraftForInvalidPurchaseOrder(purchaseOrder));
+    }
+
+    @Transactional
+    public RejectionLetter ensureDraftForInvalidPurchaseOrder(PurchaseOrder purchaseOrder) {
         if (purchaseOrder.getStatus() != PurchaseOrderStatus.INVALID) {
             throw new IllegalArgumentException("Rejection letter can only be created for invalid purchase orders");
         }
         if (!StringUtils.hasText(purchaseOrder.getValidationReason())) {
             throw new IllegalArgumentException("Purchase order has no rejection reason");
         }
+        return rejectionLetterRepository.findByPurchaseOrderId(purchaseOrder.getId())
+            .map(existingLetter -> updateDraftLetterIfNeeded(existingLetter, purchaseOrder))
+            .orElseGet(() -> createDraftLetter(purchaseOrder));
+    }
 
+    private RejectionLetter createDraftLetter(PurchaseOrder purchaseOrder) {
         RejectionLetter rejectionLetter = new RejectionLetter();
         rejectionLetter.setLetterNumber(generateLetterNumber(purchaseOrder));
         rejectionLetter.setPurchaseOrder(purchaseOrder);
@@ -95,7 +102,16 @@ public class RejectionLetterService {
             savedLetter.getId(),
             "Created rejection letter " + savedLetter.getLetterNumber()
         );
-        return RejectionLetterMapper.toResponse(savedLetter);
+        return savedLetter;
+    }
+
+    private RejectionLetter updateDraftLetterIfNeeded(RejectionLetter rejectionLetter, PurchaseOrder purchaseOrder) {
+        if (rejectionLetter.getStatus() == RejectionLetterStatus.DRAFT) {
+            rejectionLetter.setAgency(purchaseOrder.getContract().getAgency());
+            rejectionLetter.setReason(purchaseOrder.getValidationReason());
+            rejectionLetter.setContent(buildLetterContent(purchaseOrder));
+        }
+        return rejectionLetter;
     }
 
     @Transactional

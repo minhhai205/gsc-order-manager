@@ -41,17 +41,20 @@ public class PurchaseOrderService {
     private final StandingContractRepository standingContractRepository;
     private final EquipmentRepository equipmentRepository;
     private final AuditLogService auditLogService;
+    private final RejectionLetterService rejectionLetterService;
 
     public PurchaseOrderService(
         PurchaseOrderRepository purchaseOrderRepository,
         StandingContractRepository standingContractRepository,
         EquipmentRepository equipmentRepository,
-        AuditLogService auditLogService
+        AuditLogService auditLogService,
+        RejectionLetterService rejectionLetterService
     ) {
         this.purchaseOrderRepository = purchaseOrderRepository;
         this.standingContractRepository = standingContractRepository;
         this.equipmentRepository = equipmentRepository;
         this.auditLogService = auditLogService;
+        this.rejectionLetterService = rejectionLetterService;
     }
 
     @Transactional(readOnly = true)
@@ -145,6 +148,7 @@ public class PurchaseOrderService {
         } else {
             purchaseOrder.setStatus(PurchaseOrderStatus.INVALID);
             purchaseOrder.setValidationReason(String.join("; ", validationErrors));
+            rejectionLetterService.ensureDraftForInvalidPurchaseOrder(purchaseOrder);
         }
 
         auditLogService.record(

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,6 +47,9 @@ class PurchaseOrderServiceTest {
 
     @Mock
     private AuditLogService auditLogService;
+
+    @Mock
+    private RejectionLetterService rejectionLetterService;
 
     @InjectMocks
     private PurchaseOrderService purchaseOrderService;
@@ -99,6 +103,7 @@ class PurchaseOrderServiceTest {
         assertThat(response.getStatus()).isEqualTo(PurchaseOrderStatus.OUTSTANDING);
         assertThat(response.getValidationReason()).isNull();
         assertThat(response.getValidatedAt()).isNotNull();
+        verify(rejectionLetterService, never()).ensureDraftForInvalidPurchaseOrder(any());
         verify(auditLogService).record(
             eq(AuditAction.VALIDATE_PO),
             eq(PurchaseOrder.class.getSimpleName()),
@@ -117,6 +122,7 @@ class PurchaseOrderServiceTest {
 
         assertThat(response.getStatus()).isEqualTo(PurchaseOrderStatus.INVALID);
         assertThat(response.getValidationReason()).contains("Total amount exceeds contract cost limit");
+        verify(rejectionLetterService).ensureDraftForInvalidPurchaseOrder(purchaseOrder);
     }
 
     @Test
@@ -133,6 +139,7 @@ class PurchaseOrderServiceTest {
 
         assertThat(response.getStatus()).isEqualTo(PurchaseOrderStatus.INVALID);
         assertThat(response.getValidationReason()).contains("Equipment is not allowed by contract: MON-001");
+        verify(rejectionLetterService).ensureDraftForInvalidPurchaseOrder(purchaseOrder);
     }
 
     private CreatePurchaseOrderRequest createRequest(Long equipmentId, int quantity) {

@@ -76,6 +76,8 @@ class ShippingBillServiceTest {
         assertThat(response.getShippingBillNumber()).isEqualTo("SB-PO-001");
         assertThat(response.getStatus()).isEqualTo(ShippingStatus.DRAFT);
         assertThat(response.getItems()).extracting("shippedQuantity").containsExactly(2);
+        assertThat(response.getItems().get(0).getLineTotal()).isEqualByComparingTo("2400");
+        assertThat(response.getTotalAmount()).isEqualByComparingTo("2400");
         verify(auditLogService).record(
             eq(AuditAction.ISSUE_SHIPPING_BILL),
             eq(ShippingBill.class.getSimpleName()),
@@ -112,6 +114,8 @@ class ShippingBillServiceTest {
         ShippingBillResponse response = shippingBillService.create(40L, createRequest(20L, 2));
 
         assertThat(response.getItems()).extracting("shippedQuantity").containsExactly(1);
+        assertThat(response.getItems().get(0).getLineTotal()).isEqualByComparingTo("1200");
+        assertThat(response.getTotalAmount()).isEqualByComparingTo("1200");
     }
 
     @Test
