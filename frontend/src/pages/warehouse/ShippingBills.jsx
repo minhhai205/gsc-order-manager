@@ -6,7 +6,7 @@ import Badge from '../../components/ui/Badge';
 import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck, CheckCircle, AlertTriangle, X } from 'lucide-react';
 
 export default function ShippingBills() {
-  const { purchaseOrders, shippingBills, equipment, handleCreateShippingBill, handleConfirmShippingBill, handleUpdateShippingStatus } = useAppData();
+  const { purchaseOrders, shippingBills, equipment, exceptionReports, handleCreateShippingBill, handleConfirmShippingBill, handleUpdateShippingStatus } = useAppData();
   const { currentUser } = useAuth();
 
   const isWarehouse = currentUser?.role === ROLES.WAREHOUSE_STAPS || currentUser?.role === ROLES.WAREHOUSE_STAFF;
@@ -257,9 +257,20 @@ export default function ShippingBills() {
               <ul className="flex-col gap-xs" style={{ paddingLeft: '20px', fontSize: 'var(--font-size-sm)' }}>
                 {selectedPo.items.map((item, idx) => {
                   const eq = equipment.find(e => e.id === item.equipmentId);
+                  const report = exceptionReports?.find(r => r.poId === selectedPo.id);
+                  const shortage = report?.shortages?.find(s => s.equipmentId === item.equipmentId);
+                  const displayQty = shortage ? shortage.available : item.quantity;
+                  const hasShortage = shortage && shortage.shortage > 0;
                   return (
                     <li key={idx}>
-                      {eq ? eq.code : `#${item.equipmentId}`} - {eq ? eq.name : 'Unknown Equipment'} (x{item.quantity} units)
+                      {eq ? eq.code : `#${item.equipmentId}`} - {eq ? eq.name : 'Unknown Equipment'}{' '}
+                      {hasShortage ? (
+                        <span style={{ color: 'var(--color-warning)', fontWeight: 'bold' }}>
+                          (x{displayQty} units - Shipped quantity reduced due to stock shortage of {shortage.shortage} units)
+                        </span>
+                      ) : (
+                        `(x${displayQty} units)`
+                      )}
                     </li>
                   );
                 })}

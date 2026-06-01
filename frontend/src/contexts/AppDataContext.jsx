@@ -425,13 +425,24 @@ export function AppDataProvider({ children }) {
     const matchedAgency = matchedContract ? agencies.find(a => a.id === matchedContract.agencyId) : null;
     const destinationAddress = matchedAgency ? matchedAgency.address : 'Địa chỉ Cơ quan Đối tác';
 
+    const exceptionReport = exceptionReports.find(r => r.poId === po.id);
+
     const requestBody = {
       shippingDate: new Date().toISOString().slice(0, 10),
       destinationAddress: destinationAddress,
-      items: po.items.map(item => ({
-        equipmentId: Number(item.equipmentId),
-        shippedQuantity: Number(item.quantity)
-      }))
+      items: po.items.map(item => {
+        let qty = Number(item.quantity);
+        if (exceptionReport) {
+          const shortageItem = exceptionReport.shortages.find(s => s.equipmentId === item.equipmentId);
+          if (shortageItem) {
+            qty = Number(shortageItem.available);
+          }
+        }
+        return {
+          equipmentId: Number(item.equipmentId),
+          shippedQuantity: qty
+        };
+      })
     };
     await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
     loadAllData();
