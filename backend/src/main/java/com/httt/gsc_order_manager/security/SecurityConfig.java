@@ -59,6 +59,8 @@ public class SecurityConfig {
                     .hasAnyRole("SYSTEM_ADMIN", "WAREHOUSE_STAFF", "CONTRACTING_OFFICER")
                 .requestMatchers(HttpMethod.GET, "/api/purchase-orders/**")
                     .hasAnyRole("SYSTEM_ADMIN", "CONTRACTING_OFFICER", "WAREHOUSE_STAFF", "ORDER_FULFILLMENT_STAFF")
+                .requestMatchers(HttpMethod.GET, "/api/exception-reports/**")
+                    .hasAnyRole("SYSTEM_ADMIN", "ORDER_FULFILLMENT_STAFF", "CONTRACTING_OFFICER")
                 .requestMatchers("/api/purchase-orders/*/shipping-bill")
                     .hasAnyRole("SYSTEM_ADMIN", "WAREHOUSE_STAFF")
                 .requestMatchers("/api/purchase-orders/*/inventory-check", "/api/purchase-orders/*/confirm-inventory-check", "/api/purchase-orders/*/exception-report")
