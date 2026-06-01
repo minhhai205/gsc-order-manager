@@ -28,11 +28,10 @@ export default function ManageOrders() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showLetterModal, setShowLetterModal] = useState(false);
 
   // Active records state
   const [selectedPo, setSelectedPo] = useState(null);
-  const [selectedLetter, setSelectedLetter] = useState(null);
+  const [inlineRejectionLetter, setInlineRejectionLetter] = useState(null);
 
   // System notification alert state
   const [systemAlert, setSystemAlert] = useState({ type: '', message: '' });
@@ -81,6 +80,7 @@ export default function ManageOrders() {
 
   const openDetail = (po) => {
     setSelectedPo(po);
+    setInlineRejectionLetter(null);
     setShowDetailModal(true);
   };
 
@@ -154,34 +154,32 @@ export default function ManageOrders() {
     }
   };
 
-  const openRejectionLetter = async (po) => {
-    const existing = rejectionLetters.find(l => l.poId === po.id);
-    if (existing) {
-      setSelectedLetter(existing);
-    } else {
-      try {
-        const created = await generateRejectionLetter(po);
-        setSelectedLetter(created);
-      } catch (err) {
-        triggerAlert('danger', `Failed to generate rejection letter: ${err.message}`);
-        return;
-      }
-    }
-    setShowLetterModal(true);
-  };
-
   const onSendRejectionLetter = async (id) => {
     try {
       await handleSendRejectionLetter(id);
-      setShowLetterModal(false);
+      setInlineRejectionLetter(prev => prev && prev.id === id ? { ...prev, status: 'ISSUED' } : prev);
       triggerAlert('success', 'Official rejection letter has been issued and emailed to the agency.');
     } catch (err) {
       triggerAlert('danger', `Failed to send rejection letter: ${err.message}`);
     }
   };
 
+  const createRejectionLetterForSelectedPo = async () => {
+    if (!selectedPo) return;
+    try {
+      const created = await generateRejectionLetter(selectedPo);
+      setInlineRejectionLetter(created);
+      triggerAlert('success', `Rejection letter created for PO: ${selectedPo.poNumber}`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to generate rejection letter: ${err.message}`);
+    }
+  };
+
   const selectedExceptionReport = selectedPo
     ? exceptionReports.find(report => report.poId === selectedPo.id)
+    : null;
+  const selectedRejectionLetter = selectedPo
+    ? rejectionLetters.find(letter => letter.poId === selectedPo.id) || (inlineRejectionLetter?.poId === selectedPo.id ? inlineRejectionLetter : null)
     : null;
 
   if (!isCo) {
@@ -338,14 +336,7 @@ export default function ManageOrders() {
                               Validate
                             </button>
                           ) : po.status === 'INVALID' ? (
-                            <button
-                              onClick={() => openRejectionLetter(po)}
-                              className="btn btn-warning"
-                              style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)' }}
-                            >
-                              <FileWarning size={12} />
-                              Rejection
-                            </button>
+                            <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-danger)', fontWeight: 700 }}>Rejected</span>
                           ) : po.status === 'SHIPPED' ? (
                             <button
                               onClick={async () => {
@@ -668,7 +659,7 @@ export default function ManageOrders() {
                 {/* Status indicator blocks */}
                 <div className="box-card" style={{ padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div className="flex-col">
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700 }}>PO STATUS:</span>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 700 }}>COMPLIANCE STATUS:</span>
                     <div style={{ marginTop: '4px' }}><Badge status={selectedPo.status} /></div>
                   </div>
                   <div className="flex-col align-end">
@@ -682,6 +673,73 @@ export default function ManageOrders() {
             </div>
 
             {/* Bottom Row: Visual Lifecycle timeline history tracker */}
+            <div className="box-card" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)' }}>
+              <h4 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Mail size={16} style={{ color: 'var(--color-danger)' }} />
+                Rejection Letter Attachment
+              </h4>
+
+              {selectedRejectionLetter ? (
+                <div className="flex-col gap-md">
+                  <div className="box-card" style={{ backgroundColor: 'var(--card-bg)', border: '1px dashed var(--border-light)' }}>
+                    <div className="flex-row justify-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', marginBottom: '12px' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedRejectionLetter.letterNumber || 'REJ-DRAFT'}</span>
+                      <span style={{ fontSize: '11px', fontWeight: 600 }}>Date: {selectedRejectionLetter.issueDate}</span>
+                    </div>
+                    <p style={{ fontSize: 'var(--font-size-sm)' }}>
+                      <strong>TO:</strong> {selectedRejectionLetter.agencyName} ({selectedRejectionLetter.agencyEmail})
+                    </p>
+                    <p style={{ fontSize: 'var(--font-size-sm)' }}>
+                      <strong>SUBJECT:</strong> Rejection of Purchase Order No. {selectedRejectionLetter.poNumber}
+                    </p>
+                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '12px 0' }} />
+                    <p style={{ fontSize: 'var(--font-size-sm)', lineHeight: 1.5 }}>
+                      Purchase order is <strong>REJECTED</strong> because of the following validation issue(s):
+                    </p>
+                    <ul className="flex-col gap-xs" style={{ paddingLeft: '20px', fontSize: 'var(--font-size-sm)', color: 'var(--color-danger)' }}>
+                      {selectedRejectionLetter.reasons?.map((reason, idx) => (
+                        <li key={idx}>{reason}</li>
+                      ))}
+                    </ul>
+                    <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '12px 0' }} />
+                    <div className="flex-row justify-between align-center" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                      <span>Created By: {selectedRejectionLetter.createdBy}</span>
+                      <span>Status: <Badge status={selectedRejectionLetter.status} /></span>
+                    </div>
+                  </div>
+
+                  {selectedRejectionLetter.status === 'DRAFT' && (
+                    <button
+                      type="button"
+                      onClick={() => onSendRejectionLetter(selectedRejectionLetter.id)}
+                      className="btn btn-primary"
+                      style={{ display: 'flex', alignItems: 'center', gap: '6px', alignSelf: 'flex-end' }}
+                    >
+                      <Mail size={14} />
+                      Issue & Email Agency
+                    </button>
+                  )}
+                </div>
+              ) : selectedPo.status === 'INVALID' ? (
+                <div className="flex-row justify-between align-center" style={{ padding: '14px', border: '1px dashed var(--border-light)', borderRadius: 'var(--border-radius-sm)' }}>
+                  <span style={{ color: 'var(--text-muted)' }}>Chưa có Rejection Letter gắn với đơn hàng này.</span>
+                  <button
+                    type="button"
+                    onClick={createRejectionLetterForSelectedPo}
+                    className="btn btn-warning"
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <FileWarning size={14} />
+                    Generate Rejection Letter
+                  </button>
+                </div>
+              ) : (
+                <div style={{ padding: '14px', border: '1px dashed var(--border-light)', borderRadius: 'var(--border-radius-sm)', color: 'var(--text-muted)' }}>
+                  Không có Rejection Letter gắn với đơn hàng này.
+                </div>
+              )}
+            </div>
+
             <div className="box-card" style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border-light)' }}>
               <h4 style={{ margin: '0 0 16px 0', borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <FileWarning size={16} style={{ color: 'var(--color-warning)' }} />
@@ -784,60 +842,6 @@ export default function ManageOrders() {
         </div>
       </Modal>
 
-      {/* REJECTION LETTER MODAL */}
-      <Modal isOpen={showLetterModal} onClose={() => setShowLetterModal(false)} title="Generate Rejection Letter (UC5)">
-        {selectedLetter && (
-          <div className="flex-col gap-md">
-            <div className="box-card" style={{ backgroundColor: 'var(--card-bg)', border: '1px dashed var(--border-light)' }}>
-              <div className="flex-row justify-between" style={{ borderBottom: '1px solid var(--border-light)', paddingBottom: '8px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{selectedLetter.letterNumber || 'REJ-DRAFT'}</span>
-                <span style={{ fontSize: '11px', fontWeight: 600 }}>Date: {selectedLetter.issueDate}</span>
-              </div>
-              <p style={{ fontSize: 'var(--font-size-sm)' }}>
-                <strong>TO:</strong> {selectedLetter.agencyName} ({selectedLetter.agencyEmail})
-              </p>
-              <p style={{ fontSize: 'var(--font-size-sm)' }}>
-                <strong>SUBJECT:</strong> Rejection of Purchase Order No. {selectedLetter.poNumber}
-              </p>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '12px 0' }} />
-              <p style={{ fontSize: 'var(--font-size-sm)', lineHeight: 1.5 }}>
-                Your purchase order is officially <strong>REJECTED</strong> due to the following non-compliance errors:
-              </p>
-              <ul className="flex-col gap-xs" style={{ paddingLeft: '20px', fontSize: 'var(--font-size-sm)', color: 'var(--color-danger)' }}>
-                {selectedLetter.reasons?.map((err, i) => (
-                  <li key={i}>{err}</li>
-                ))}
-              </ul>
-              <hr style={{ border: 'none', borderTop: '1px solid var(--border-light)', margin: '12px 0' }} />
-              <div className="flex-row justify-between align-center" style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                <span>Signed: Contracting Officer (Authorized)</span>
-                <span>Created By: {selectedLetter.createdBy}</span>
-              </div>
-            </div>
-
-            <div className="flex-row justify-between align-center">
-              <div>
-                <span style={{ fontSize: 'var(--font-size-xs)' }}>Status: </span>
-                <Badge status={selectedLetter.status} />
-              </div>
-              <div className="flex-row gap-sm">
-                <button type="button" onClick={() => setShowLetterModal(false)} className="btn btn-secondary">Close</button>
-                {selectedLetter.status === 'DRAFT' && (
-                  <button 
-                    type="button" 
-                    onClick={() => onSendRejectionLetter(selectedLetter.id)} 
-                    className="btn btn-primary"
-                    style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <Mail size={14} />
-                    Issue & Email Agency
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 }
