@@ -180,7 +180,6 @@ export default function ManageContracts() {
                 <th>Contract Code</th>
                 <th>Federal Agency</th>
                 <th>Cost Limit</th>
-                <th>Spent Value Progress</th>
                 <th>Contract Period</th>
                 <th>Whitelisted Items</th>
                 <th>Operation Actions</th>
@@ -189,37 +188,19 @@ export default function ManageContracts() {
             <tbody>
               {contracts.length === 0 ? (
                 <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No standing contracts issued.</td>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No standing contracts issued.</td>
                 </tr>
               ) : (
                 contracts.map(c => {
                   const agency = agencies.find(a => a.id === c.agencyId);
                   const today = new Date().toISOString().slice(0, 10);
                   const isExpired = c.endDate < today;
-                  const progressPercent = Math.min(100, (c.spent / c.costLimit) * 100);
 
                   return (
                     <tr key={c.id}>
                       <td><strong>{c.code}</strong></td>
                       <td><strong>{agency ? agency.code : `ID: ${c.agencyId}`}</strong></td>
                       <td>${c.costLimit.toLocaleString()}</td>
-                      <td>
-                        <div className="flex-col gap-xs" style={{ minWidth: '120px' }}>
-                          <div className="flex-row justify-between" style={{ fontSize: '11px', fontWeight: 600 }}>
-                            <span>${c.spent.toLocaleString()}</span>
-                            <span>{progressPercent.toFixed(1)}%</span>
-                          </div>
-                          <div className="progress-bar-bg">
-                            <div 
-                              className="progress-bar-fill" 
-                              style={{ 
-                                width: `${progressPercent}%`,
-                                backgroundColor: progressPercent > 90 ? 'var(--color-danger)' : progressPercent > 70 ? 'var(--color-warning)' : 'var(--color-success)'
-                              }}
-                            ></div>
-                          </div>
-                        </div>
-                      </td>
                       <td style={{ color: isExpired ? 'var(--color-danger)' : 'inherit', fontWeight: isExpired ? 700 : 'inherit' }}>
                         <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{c.startDate} to</div>
                         <div>{c.endDate} {isExpired && '⚠️'}</div>
