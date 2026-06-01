@@ -101,16 +101,18 @@ public class ShippingBillService {
                 throw new IllegalArgumentException("Shipped quantity cannot exceed requested quantity");
             }
             int maxShippableQuantity = maxShippableQuantity(poItem, exceptionReport);
-            if (itemRequest.getShippedQuantity() > maxShippableQuantity) {
-                throw new IllegalArgumentException(
-                    "Shipped quantity cannot exceed available quantity for equipment " + poItem.getEquipment().getSku()
-                );
+            int shippedQuantity = Math.min(itemRequest.getShippedQuantity(), maxShippableQuantity);
+            if (shippedQuantity <= 0) {
+                continue;
             }
             ShippingBillItem item = new ShippingBillItem();
             item.setShippingBill(bill);
             item.setEquipment(poItem.getEquipment());
-            item.setShippedQuantity(itemRequest.getShippedQuantity());
+            item.setShippedQuantity(shippedQuantity);
             bill.getItems().add(item);
+        }
+        if (bill.getItems().isEmpty()) {
+            throw new IllegalArgumentException("Shipping bill must contain at least one item available to ship");
         }
         ShippingBill saved = shippingBillRepository.save(bill);
         auditLogService.record(AuditAction.ISSUE_SHIPPING_BILL, ShippingBill.class.getSimpleName(),

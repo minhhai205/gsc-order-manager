@@ -96,17 +96,36 @@ class ShippingBillServiceTest {
     }
 
     @Test
-    void createRejectsShippedQuantityGreaterThanAvailableQuantityFromExceptionReport() {
+    void createReducesShippedQuantityToAvailableQuantityFromExceptionReport() {
         Equipment equipment = equipment(20L, "LAP-001", 5);
         PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
         when(shippingBillRepository.existsByPurchaseOrderId(40L)).thenReturn(false);
         when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
         when(exceptionReportRepository.findByPurchaseOrderId(40L))
             .thenReturn(Optional.of(exceptionReport(purchaseOrder, equipment, 3, 1, 2)));
+        when(shippingBillRepository.save(any(ShippingBill.class))).thenAnswer(invocation -> {
+            ShippingBill bill = invocation.getArgument(0);
+            bill.setId(70L);
+            return bill;
+        });
 
-        assertThatThrownBy(() -> shippingBillService.create(40L, createRequest(20L, 2)))
+        ShippingBillResponse response = shippingBillService.create(40L, createRequest(20L, 2));
+
+        assertThat(response.getItems()).extracting("shippedQuantity").containsExactly(1);
+    }
+
+    @Test
+    void createRejectsWhenNoItemsAreAvailableToShip() {
+        Equipment equipment = equipment(20L, "LAP-001", 0);
+        PurchaseOrder purchaseOrder = purchaseOrder(PurchaseOrderStatus.READY_TO_SHIP, equipment, 3);
+        when(shippingBillRepository.existsByPurchaseOrderId(40L)).thenReturn(false);
+        when(purchaseOrderRepository.findById(40L)).thenReturn(Optional.of(purchaseOrder));
+        when(exceptionReportRepository.findByPurchaseOrderId(40L))
+            .thenReturn(Optional.of(exceptionReport(purchaseOrder, equipment, 3, 0, 3)));
+
+        assertThatThrownBy(() -> shippingBillService.create(40L, createRequest(20L, 3)))
             .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("Shipped quantity cannot exceed available quantity for equipment LAP-001");
+            .hasMessage("Shipping bill must contain at least one item available to ship");
     }
 
     @Test

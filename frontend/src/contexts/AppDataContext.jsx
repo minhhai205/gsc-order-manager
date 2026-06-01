@@ -430,20 +430,25 @@ export function AppDataProvider({ children }) {
     const requestBody = {
       shippingDate: new Date().toISOString().slice(0, 10),
       destinationAddress: destinationAddress,
-      items: po.items.map(item => {
-        let qty = Number(item.quantity);
-        if (exceptionReport) {
-          const shortageItem = exceptionReport.shortages.find(s => s.equipmentId === item.equipmentId);
-          if (shortageItem) {
-            qty = Number(shortageItem.available);
+      items: po.items
+        .map(item => {
+          let qty = Number(item.quantity);
+          if (exceptionReport) {
+            const shortageItem = exceptionReport.shortages.find(s => s.equipmentId === item.equipmentId);
+            if (shortageItem) {
+              qty = Number(shortageItem.available);
+            }
           }
-        }
-        return {
-          equipmentId: Number(item.equipmentId),
-          shippedQuantity: qty
-        };
-      })
+          return {
+            equipmentId: Number(item.equipmentId),
+            shippedQuantity: qty
+          };
+        })
+        .filter(item => item.shippedQuantity > 0)
     };
+    if (requestBody.items.length === 0) {
+      throw new Error('No purchase order items are available to ship.');
+    }
     await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
     loadAllData();
     return true;

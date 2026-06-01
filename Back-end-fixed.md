@@ -142,8 +142,10 @@ Logic backend:
 - Không cho tạo nhiều Shipping Bill cho cùng một PO.
 - Kiểm tra item trong bill phải thuộc PO.
 - Không cho `shippedQuantity` vượt số lượng đặt trong PO.
-- Không cho `shippedQuantity` vượt số lượng có thể giao.
+- Nếu request gửi `shippedQuantity` lớn hơn số lượng có thể giao, backend tự giảm xuống số lượng có thể giao.
 - Nếu có Exception Report, số lượng có thể giao bị giới hạn bởi `availableQuantity` trong report.
+- Item có số lượng có thể giao bằng `0` sẽ không được đưa vào Shipping Bill.
+- Nếu không còn item nào có thể giao, backend mới từ chối tạo Shipping Bill.
 - Bill sau khi tạo ở trạng thái `DRAFT`.
 - Chưa trừ tồn kho ở bước create.
 - Chưa đổi PO sang `SHIPPED`.
