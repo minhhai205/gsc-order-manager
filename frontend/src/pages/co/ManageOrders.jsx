@@ -59,7 +59,7 @@ export default function ManageOrders() {
       contractId: '', 
       issueDate: new Date().toISOString().slice(0, 10), 
       validationReason: '',
-      items: [{ equipmentId: '', quantity: '', customPrice: '' }] 
+      items: [{ equipmentId: '', quantity: '' }] 
     });
     setShowCreateModal(true);
   };
@@ -73,8 +73,7 @@ export default function ManageOrders() {
       validationReason: po.validationReason || '',
       items: po.items.map(item => ({
         equipmentId: item.equipmentId.toString(),
-        quantity: item.quantity.toString(),
-        customPrice: item.price !== item.catalogPrice ? item.price.toString() : ''
+        quantity: item.quantity.toString()
       }))
     });
     setShowEditModal(true);
@@ -101,7 +100,7 @@ export default function ManageOrders() {
   const addPoItemField = () => {
     setFormData(prev => ({
       ...prev,
-      items: [...prev.items, { equipmentId: '', quantity: '', customPrice: '' }]
+      items: [...prev.items, { equipmentId: '', quantity: '' }]
     }));
   };
 
@@ -428,7 +427,7 @@ export default function ManageOrders() {
           </div>
 
           <p style={{ margin: '0 0 10px 0', fontSize: '11px', color: 'var(--text-muted)' }}>
-            Choose an item and specify quantities. Leave the Custom Price Override field blank to use default catalog pricing.
+            Choose an item and specify quantities.
           </p>
           <div className="flex-col gap-sm" style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border-light)', padding: '12px', borderRadius: 'var(--border-radius-sm)', background: 'rgba(255,255,255,0.01)' }}>
             {formData.items.map((item, idx) => (
@@ -455,17 +454,6 @@ export default function ManageOrders() {
                     onChange={(e) => handlePoItemChange(idx, 'quantity', e.target.value)} 
                     required 
                     style={{ padding: '8px 12px' }}
-                  />
-                </div>
-                <div className="flex-col gap-xxs" style={{ width: '130px' }}>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    placeholder="Custom Price" 
-                    value={item.customPrice} 
-                    onChange={(e) => handlePoItemChange(idx, 'customPrice', e.target.value)} 
-                    style={{ padding: '8px 12px' }}
-                    title="Leave blank to use default price"
                   />
                 </div>
                 {formData.items.length > 1 && (
@@ -555,16 +543,6 @@ export default function ManageOrders() {
                     value={item.quantity} 
                     onChange={(e) => handlePoItemChange(idx, 'quantity', e.target.value)} 
                     required 
-                    style={{ padding: '8px 12px' }}
-                  />
-                </div>
-                <div className="flex-col gap-xxs" style={{ width: '130px' }}>
-                  <input 
-                    type="number" 
-                    min="1" 
-                    placeholder="Custom Price" 
-                    value={item.customPrice} 
-                    onChange={(e) => handlePoItemChange(idx, 'customPrice', e.target.value)} 
                     style={{ padding: '8px 12px' }}
                   />
                 </div>
@@ -766,7 +744,7 @@ export default function ManageOrders() {
                 Your purchase order is officially <strong>REJECTED</strong> due to the following non-compliance errors:
               </p>
               <ul className="flex-col gap-xs" style={{ paddingLeft: '20px', fontSize: 'var(--font-size-sm)', color: 'var(--color-danger)' }}>
-                {selectedLetter.reasons.map((err, i) => (
+                {selectedLetter.reasons?.map((err, i) => (
                   <li key={i}>{err}</li>
                 ))}
               </ul>

@@ -32,12 +32,15 @@ services:
     restart: always
     ports:
       - "8086:8080"
+    volumes:
+      - ./backups:/app/backups
     environment:
       # Inject connection URL pointing to the "db" container instead of localhost
       - SPRING_DATASOURCE_URL=jdbc:mysql://db:3306/gsc_order_manager?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
       - SPRING_DATASOURCE_USERNAME=root
       - SPRING_DATASOURCE_PASSWORD=123456
       - SPRING_JPA_HIBERNATE_DDL_AUTO=create
+      - APP_BACKUP_DIRECTORY=/app/backups
     depends_on:
       db:
         condition: service_healthy

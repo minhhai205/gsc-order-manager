@@ -124,13 +124,14 @@ export default function AvailabilityChecks() {
                   <th>PO Reference</th>
                   <th>Total Invoice</th>
                   <th>Order Items Breakdown</th>
+                  <th>Status</th>
                   <th>Operation Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {pendingChecks.length === 0 ? (
                   <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No outstanding POs awaiting stock check.</td>
+                    <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No outstanding POs awaiting stock check.</td>
                   </tr>
                 ) : (
                   pendingChecks.map(po => (
@@ -149,6 +150,7 @@ export default function AvailabilityChecks() {
                           })}
                         </div>
                       </td>
+                      <td><Badge status={po.status} /></td>
                       <td>
                         <button 
                           onClick={() => runCheck(po)} 
@@ -171,11 +173,11 @@ export default function AvailabilityChecks() {
         <div className="box-col gap-md">
           <div className="box-card">
             <h3>Nomenclature Guide</h3>
-            <p style={{ fontSize: 'var(--font-size-xs)', lineHeight: 1.5, margin: 0 }}>
-              * **OUTSTANDING:** PO validated by CO, waiting for physical stock allocation check.
-              * **READY_TO_SHIP:** Stock is sufficient and allocated. Safe to issue cargo shipping bill.
-              * **INVENTORY_CHECKED:** Shortages detected and registered in Exception Report.
-            </p>
+            <ul style={{ fontSize: 'var(--font-size-xs)', lineHeight: 1.5, margin: 0, paddingLeft: '20px' }}>
+              <li><strong>OUTSTANDING:</strong> PO validated by CO, waiting for physical stock allocation check.</li>
+              <li><strong>READY_TO_SHIP:</strong> Stock is sufficient and allocated. Safe to issue cargo shipping bill.</li>
+              <li><strong>INVENTORY_CHECKED:</strong> Shortages detected and registered in Exception Report.</li>
+            </ul>
           </div>
         </div>
       </div>

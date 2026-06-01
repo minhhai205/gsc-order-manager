@@ -394,7 +394,8 @@ export function AppDataProvider({ children }) {
 
   const handleInventoryCheck = async (po) => {
     const response = await api.post(`/api/purchase-orders/${po.id}/inventory-check`);
-    const shortages = response.items ? response.items.filter(item => !item.sufficient).map(item => ({
+    const checkData = response.data || response;
+    const shortages = checkData.items ? checkData.items.filter(item => !item.sufficient).map(item => ({
       equipmentId: item.equipment.id,
       code: item.equipment.sku,
       name: item.equipment.name,
@@ -405,12 +406,12 @@ export function AppDataProvider({ children }) {
 
     console.log('Inventory Check Result:', response);
 
-    if (response.data.allItemsAvailable) {
+    if (checkData.allItemsAvailable) {
       await api.patch(`/api/purchase-orders/${po.id}/confirm-inventory-check`);
     }
 
     loadAllData();
-    return { shortages, success: response.allItemsAvailable };
+    return { shortages, success: checkData.allItemsAvailable };
   };
 
   const handleConfirmExceptionReport = async (po, shortages) => {
@@ -418,7 +419,7 @@ export function AppDataProvider({ children }) {
     loadAllData();
   };
 
-  const handleConfirmShipping = async (po) => {
+  const handleCreateShippingBill = async (po) => {
     const matchedContract = contracts.find(c => c.id === po.contractId);
     const matchedAgency = matchedContract ? agencies.find(a => a.id === matchedContract.agencyId) : null;
     const destinationAddress = matchedAgency ? matchedAgency.address : 'Địa chỉ Cơ quan Đối tác';
@@ -431,10 +432,19 @@ export function AppDataProvider({ children }) {
         shippedQuantity: Number(item.quantity)
       }))
     };
-    const res = await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
-    if (res && res.data && res.data.id) {
-      await api.patch(`/api/shipping-bills/${res.data.id}/confirm`);
-    }
+    await api.post(`/api/purchase-orders/${po.id}/shipping-bill`, requestBody);
+    loadAllData();
+    return true;
+  };
+
+  const handleConfirmShippingBill = async (billId) => {
+    await api.patch(`/api/shipping-bills/${billId}/confirm`);
+    loadAllData();
+    return true;
+  };
+
+  const handleUpdateShippingStatus = async (billId, status) => {
+    await api.patch(`/api/shipping-bills/${billId}/status`, { status });
     loadAllData();
     return true;
   };
@@ -475,14 +485,21 @@ export function AppDataProvider({ children }) {
     console.warn('Backend không hỗ trợ xoá đơn đặt hàng!');
   };
 
+  const computedContracts = contracts.map(c => ({
+    ...c,
+    spent: purchaseOrders
+      .filter(po => po.contractId === c.id && po.status !== 'INVALID' && po.status !== 'REJECTED')
+      .reduce((sum, po) => sum + po.totalAmount, 0)
+  }));
+
   return (
     <AppDataContext.Provider value={{
-      agencies, equipment, contracts, purchaseOrders, auditLogs,
+      agencies, equipment, contracts: computedContracts, purchaseOrders, auditLogs,
       exceptionReports, shippingBills, rejectionLetters, backups,
       handleCreateAgency, toggleAgencyStatus, handleCreateContract,
       handleStockAdjustment, handleCreatePo, validatePurchaseOrder,
       generateRejectionLetter, handleSendRejectionLetter, handleInventoryCheck,
-      handleConfirmExceptionReport, handleConfirmShipping, closeAndArchivePo,
+      handleConfirmExceptionReport, handleCreateShippingBill, handleConfirmShippingBill, handleUpdateShippingStatus, closeAndArchivePo,
       triggerDatabaseBackup, triggerDatabaseRestore,
       handleUpdateAgency, handleDeleteAgency, handleUpdateContract, handleDeleteContract, toggleContractStatus,
       handleCreateEquipment, handleUpdateEquipment, handleDeleteEquipment, handleUpdatePo, handleDeletePo,

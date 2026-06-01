@@ -6,10 +6,10 @@ import Badge from '../../components/ui/Badge';
 import { Truck, ShieldAlert, Check, Calendar, FileText, Eye, ShieldCheck, CheckCircle, AlertTriangle, X } from 'lucide-react';
 
 export default function ShippingBills() {
-  const { purchaseOrders, shippingBills, equipment, handleConfirmShipping } = useAppData();
+  const { purchaseOrders, shippingBills, equipment, handleCreateShippingBill, handleConfirmShippingBill, handleUpdateShippingStatus } = useAppData();
   const { currentUser } = useAuth();
 
-  const isWarehouse = currentUser?.role === ROLES.WAREHOUSE_STAFF;
+  const isWarehouse = currentUser?.role === ROLES.WAREHOUSE_STAPS || currentUser?.role === ROLES.WAREHOUSE_STAFF;
 
   // Modals state
   const [showShippingModal, setShowShippingModal] = useState(false);
@@ -38,16 +38,34 @@ export default function ShippingBills() {
     e.preventDefault();
     if (!selectedPo) return;
     try {
-      const success = await handleConfirmShipping(selectedPo);
+      const success = await handleCreateShippingBill(selectedPo);
       if (!success) {
         triggerAlert('danger', "Error: Stock changed and is now insufficient. Run inventory allocation checks again!");
       } else {
-        triggerAlert('success', `Cargo Shipping Bill issued successfully for PO: ${selectedPo.poNumber}!`);
+        triggerAlert('success', `Draft Cargo Shipping Bill created successfully for PO: ${selectedPo.poNumber}! Click 'Confirm' in the registry below to dispatch cargo.`);
       }
       setShowShippingModal(false);
       setSelectedPo(null);
     } catch (err) {
-      triggerAlert('danger', `Failed to dispatch cargo: ${err.message}`);
+      triggerAlert('danger', `Failed to create draft shipping bill: ${err.message}`);
+    }
+  };
+
+  const onConfirmBill = async (billId) => {
+    try {
+      await handleConfirmShippingBill(billId);
+      triggerAlert('success', 'Cargo Shipping Bill confirmed successfully! Shipment is now IN_TRANSIT and stock is deducted.');
+    } catch (err) {
+      triggerAlert('danger', `Failed to confirm cargo dispatch: ${err.message}`);
+    }
+  };
+
+  const onUpdateStatus = async (billId, status) => {
+    try {
+      await handleUpdateShippingStatus(billId, status);
+      triggerAlert('success', `Shipment status updated to ${status}!`);
+    } catch (err) {
+      triggerAlert('danger', `Failed to update shipment status: ${err.message}`);
     }
   };
 
@@ -145,9 +163,31 @@ export default function ShippingBills() {
                       <td><Badge status={bill.status} /></td>
                       <td>
                         <div className="flex-row align-center gap-xs">
-                          <button onClick={() => openDetail(bill)} className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }}>
+                          <button onClick={() => openDetail(bill)} className="btn btn-secondary" style={{ padding: '6px', borderRadius: '6px' }} title="View Detail">
                             <Eye size={14} />
                           </button>
+                          {bill.status === 'DRAFT' && (
+                            <button 
+                              onClick={() => onConfirmBill(bill.id)} 
+                              className="btn btn-success" 
+                              style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              title="Confirm Dispatch"
+                            >
+                              <ShieldCheck size={12} />
+                              Confirm
+                            </button>
+                          )}
+                          {bill.status === 'IN_TRANSIT' && (
+                            <button 
+                              onClick={() => onUpdateStatus(bill.id, 'DELIVERED')} 
+                              className="btn btn-primary" 
+                              style={{ padding: '6px 10px', fontSize: 'var(--font-size-xs)', display: 'flex', alignItems: 'center', gap: '4px' }}
+                              title="Complete Delivery"
+                            >
+                              <CheckCircle size={12} />
+                              Complete
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -236,7 +276,7 @@ export default function ShippingBills() {
             <div className="flex-row align-start gap-sm warning-alert" style={{ border: '1px solid var(--color-success)', padding: '10px', borderRadius: 'var(--border-radius-sm)', color: 'var(--color-success)', fontSize: 'var(--font-size-xs)' }}>
               <Check size={20} />
               <span>
-                By confirming, stock numbers will be automatically deducted, and contract expenses will be registered.
+                By confirming, a draft shipping bill will be created to allocate shipment details. Stock will be deducted only upon manual dispatch confirmation.
               </span>
             </div>
 
@@ -244,7 +284,7 @@ export default function ShippingBills() {
               <button type="button" onClick={() => setShowShippingModal(false)} className="btn btn-secondary">Cancel</button>
               <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Truck size={14} />
-                Confirm Dispatch Cargo
+                Create Draft Invoice
               </button>
             </div>
           </form>
